@@ -1,0 +1,27 @@
+{
+  "name": "seedcast",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Seedcast（飞播）— 开源、免费、纯本地的多平台内容发布桌面工具",
+  "license": "Apache-2.0",
+  "author": "owlteam990",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/owlteam990/seedcast.git"
+  },
+  "homepage": "https://github.com/owlteam990/seedcast",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "dev:engine": "pnpm --filter @seedcast/engine dev",
+    "build": "pnpm -r run build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "mock",
+  "name": "Mock",
+  "version": "0.0.1",
+  "apiVersion": 1,
+  "adapter": "flow",
+  "contentTypes": ["article"],
+  "platform": {
+    "home": "about:blank",
+    "loginUrl": "about:blank",
+    "sessionCheck": {
+      "url": "about:blank",
+      "loggedInSelector": "loggedIn",
+      "timeoutMs": 3000
+    }
+  },
+  "capabilities": {
+    "draft": false,
+    "nativeSchedule": false
+  }
+}

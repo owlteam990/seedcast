@@ -1,0 +1,10 @@
+{
+  "publish": [
+    { "action": "goto", "url": "{{fixtureUrl}}" },
+    { "action": "waitFor", "selector": "titleInput" },
+    { "action": "fill", "selector": "titleInput", "value": "{{title}}" },
+    { "action": "fill", "selector": "contentInput", "value": "{{content}}" },
+    { "action": "click", "selector": "submitButton" },
+    { "action": "extract", "selector": "resultUrl", "as": "url", "attr": "href" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@seedcast/app",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Seedcast 桌面 GUI（Tauri 2 + React，骨架占位）",
+  "scripts": {
+    "dev": "echo \"Tauri/React GUI 将在 M0 后续任务接入\"",
+    "typecheck": "echo \"no-op (skeleton)\""
+  }
+}

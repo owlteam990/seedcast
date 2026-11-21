@@ -1,0 +1,7 @@
+{
+  "loggedIn": "#logged-in",
+  "titleInput": "#title",
+  "contentInput": "#content",
+  "submitButton": "#submit",
+  "resultUrl": "#result-url"
+}

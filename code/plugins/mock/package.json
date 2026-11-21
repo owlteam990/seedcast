@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-mock",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "M0 mock 插件：本地 HTML fixture，不访问真实平台"
+}

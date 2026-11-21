@@ -1,0 +1,77 @@
+# --- dependencies & build ---
+node_modules/
+dist/
+build/
+out/
+target/
+.turbo/
+.vite/
+*.tsbuildinfo
+
+# --- env & secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+*.mobileprovision
+**/tauri.conf.local.json
+
+# --- logs ---
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- local runtime / user data (never commit) ---
+local-data/
+.seedcast/
+**/.seedcast/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+engine.json
+
+# --- test artifacts & ephemeral scripts ---
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+**/__screenshots__/
+**/fixtures/generated/
+tmp/
+temp/
+.tmp/
+scripts/local/
+**/*.local.sh
+**/*.local.ts
+**/*.local.js
+**/*-smoke.local.*
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+
+# --- packaging / native ---
+*.dmg
+*.app
+*.msi
+*.exe
+*.AppImage
+*.deb
+*.rpm
+src-tauri/gen/
+
+# --- Cursor / agent local ---
+.cursor/hooks/state/
