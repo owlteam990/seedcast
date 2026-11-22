@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-x",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "X（Twitter）官方 API 发帖"
+}

@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-youtube",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "YouTube Data API v3 视频上传（私密）"
+}

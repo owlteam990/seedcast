@@ -23,6 +23,8 @@ import { publishJianshuDraft } from '../adapters/jianshu/publish.js';
 import { publishToutiaoDraft } from '../adapters/toutiao/publish.js';
 import { publishWechatMpDraft } from '../adapters/wechatMp/publish.js';
 import { publishWeiboDraft } from '../adapters/weibo/publish.js';
+import { publishXPost } from '../adapters/x/publish.js';
+import { publishYouTubeDraft } from '../adapters/youtube/publish.js';
 import { getAccount } from '../db/accounts.js';
 import type { SeedcastDatabase } from '../db/database.js';
 import { getContent } from '../db/contents.js';
@@ -86,6 +88,14 @@ const CODE_PUBLISHERS: Record<
   douyin: {
     label: '写入抖音创作者中心草稿（页面自动化）',
     publish: publishDouyinDraft,
+  },
+  x: {
+    label: '发布到 X（官方 API）',
+    publish: publishXPost,
+  },
+  youtube: {
+    label: '上传 YouTube 私密视频（官方 API）',
+    publish: publishYouTubeDraft,
   },
 };
 
@@ -275,7 +285,10 @@ export async function runPublishJob(
         // 代码适配器：公众号官方 API / 各平台 Cookie Web API
         const codePluginId = plugin.manifest.id;
         const publisher = CODE_PUBLISHERS[codePluginId];
-        const isWechat = codePluginId === 'wechat-mp';
+        const isCredentialApi =
+          codePluginId === 'wechat-mp' ||
+          codePluginId === 'x' ||
+          codePluginId === 'youtube';
 
         if (!publisher) {
           receipt = {
@@ -293,8 +306,8 @@ export async function runPublishJob(
             type: 'info',
             taskId: task.id,
             targetIndex: i,
-            message: isWechat
-              ? `检测公众号凭证 → ${account.name}`
+            message: isCredentialApi
+              ? `检测 API 凭证 → ${account.name}`
               : `检测登录态 → ${account.name}`,
           });
           let loggedIn = account.status === 'logged_in';
@@ -312,15 +325,21 @@ export async function runPublishJob(
             loggedIn = false;
           }
           if (!loggedIn) {
+            const expireHint =
+              codePluginId === 'wechat-mp'
+                ? `公众号「${account.name}」凭证失效，请重新绑定 AppID/AppSecret`
+                : codePluginId === 'x'
+                  ? `X「${account.name}」凭证失效，请重新绑定 API Keys`
+                  : codePluginId === 'youtube'
+                    ? `YouTube「${account.name}」凭证失效，请重新绑定 OAuth`
+                    : `账号「${account.name}」登录态失效，请到账号页重新登录`;
             receipt = {
               taskId: task.id,
               target,
               ok: false,
               error: {
                 code: SeedcastErrorCode.SESSION_EXPIRED,
-                message: isWechat
-                  ? `公众号「${account.name}」凭证失效，请重新绑定 AppID/AppSecret`
-                  : `账号「${account.name}」登录态失效，请到账号页重新登录`,
+                message: expireHint,
               },
               at: new Date().toISOString(),
             };

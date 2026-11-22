@@ -86,6 +86,8 @@ function syncOfficialPlugins() {
     'weibo',
     'bilibili',
     'douyin',
+    'x',
+    'youtube',
   ];
   mkdirSync(resourcesPlugins, { recursive: true });
   for (const id of ids) {

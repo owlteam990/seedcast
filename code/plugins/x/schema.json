@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "X 发布设置",
+  "properties": {
+    "text": {
+      "type": "string",
+      "title": "自定义文案",
+      "description": "可选；缺省用标题 + 正文摘要（最长约 280 字）"
+    }
+  }
+}

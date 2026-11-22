@@ -429,8 +429,15 @@ export class EngineClient {
   bindAccount(input: {
     plugin: string;
     name: string;
-    appid: string;
-    appsecret: string;
+    appid?: string;
+    appsecret?: string;
+    apiKey?: string;
+    apiSecret?: string;
+    accessToken?: string;
+    accessTokenSecret?: string;
+    clientId?: string;
+    clientSecret?: string;
+    refreshToken?: string;
   }): Promise<{
     ok: boolean;
     loggedIn: boolean;

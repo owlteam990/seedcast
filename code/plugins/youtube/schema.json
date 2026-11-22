@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "YouTube 发布设置",
+  "properties": {
+    "privacyStatus": {
+      "type": "string",
+      "title": "可见性",
+      "description": "private（默认，等同草稿）/ unlisted / public",
+      "enum": ["private", "unlisted", "public"],
+      "default": "private"
+    },
+    "categoryId": {
+      "type": ["string", "integer"],
+      "title": "分类 ID",
+      "description": "可选；缺省 22（People & Blogs）"
+    }
+  }
+}

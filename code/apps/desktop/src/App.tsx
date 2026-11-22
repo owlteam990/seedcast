@@ -201,6 +201,13 @@ export function App() {
   const [loginPluginId, setLoginPluginId] = useState('mock');
   const [wechatAppId, setWechatAppId] = useState('');
   const [wechatAppSecret, setWechatAppSecret] = useState('');
+  const [xApiKey, setXApiKey] = useState('');
+  const [xApiSecret, setXApiSecret] = useState('');
+  const [xAccessToken, setXAccessToken] = useState('');
+  const [xAccessTokenSecret, setXAccessTokenSecret] = useState('');
+  const [ytClientId, setYtClientId] = useState('');
+  const [ytClientSecret, setYtClientSecret] = useState('');
+  const [ytRefreshToken, setYtRefreshToken] = useState('');
 
   const [logs, setLogs] = useState<string[]>([]);
   const [resultLinks, setResultLinks] = useState<string[]>([]);
@@ -292,7 +299,14 @@ export function App() {
   }, [plugins, pluginId]);
 
   const loginIsWechat = loginPluginId === 'wechat-mp';
+  const loginIsX = loginPluginId === 'x';
+  const loginIsYouTube = loginPluginId === 'youtube';
+  const loginIsCredentialBind =
+    loginIsWechat || loginIsX || loginIsYouTube;
   const publishIsWechat = pluginId === 'wechat-mp';
+  const isCredentialPlugin = (id: string): boolean => {
+    return id === 'wechat-mp' || id === 'x' || id === 'youtube';
+  };
 
   const templatePlugin = useMemo(() => {
     return plugins.find((p) => {
@@ -700,30 +714,82 @@ export function App() {
   };
 
   /**
-   * 绑定公众号凭证
+   * 绑定官方 API 凭证（公众号 / X / YouTube）
    */
-  const onBindWechat = async (): Promise<void> => {
+  const onBindCredentials = async (): Promise<void> => {
     if (!client || binding) {
-      return;
-    }
-    if (!wechatAppId.trim() || !wechatAppSecret.trim()) {
-      setError('请填写 AppID 与 AppSecret');
       return;
     }
     setBinding(true);
     setError(null);
     try {
-      const result = await client.bindAccount({
-        plugin: 'wechat-mp',
-        name: accountName,
-        appid: wechatAppId.trim(),
-        appsecret: wechatAppSecret.trim(),
-      });
+      let result: {
+        ok: boolean;
+        loggedIn: boolean;
+        account: { id: string };
+      };
+      if (loginIsWechat) {
+        if (!wechatAppId.trim() || !wechatAppSecret.trim()) {
+          setError('请填写 AppID 与 AppSecret');
+          setBinding(false);
+          return;
+        }
+        result = await client.bindAccount({
+          plugin: 'wechat-mp',
+          name: accountName,
+          appid: wechatAppId.trim(),
+          appsecret: wechatAppSecret.trim(),
+        });
+        setWechatAppSecret('');
+      } else if (loginIsX) {
+        if (
+          !xApiKey.trim() ||
+          !xApiSecret.trim() ||
+          !xAccessToken.trim() ||
+          !xAccessTokenSecret.trim()
+        ) {
+          setError('请填写完整的 X API Key / Secret 与 Access Token');
+          setBinding(false);
+          return;
+        }
+        result = await client.bindAccount({
+          plugin: 'x',
+          name: accountName,
+          apiKey: xApiKey.trim(),
+          apiSecret: xApiSecret.trim(),
+          accessToken: xAccessToken.trim(),
+          accessTokenSecret: xAccessTokenSecret.trim(),
+        });
+        setXApiSecret('');
+        setXAccessTokenSecret('');
+      } else if (loginIsYouTube) {
+        if (
+          !ytClientId.trim() ||
+          !ytClientSecret.trim() ||
+          !ytRefreshToken.trim()
+        ) {
+          setError('请填写 Client ID / Client Secret / Refresh Token');
+          setBinding(false);
+          return;
+        }
+        result = await client.bindAccount({
+          plugin: 'youtube',
+          name: accountName,
+          clientId: ytClientId.trim(),
+          clientSecret: ytClientSecret.trim(),
+          refreshToken: ytRefreshToken.trim(),
+        });
+        setYtClientSecret('');
+        setYtRefreshToken('');
+      } else {
+        setError('当前插件不支持凭证绑定');
+        setBinding(false);
+        return;
+      }
       await refreshAccounts(client);
       setAccountId(result.account.id);
-      setWechatAppSecret('');
       if (!result.loggedIn) {
-        setError('凭证已保存但 token 校验未通过');
+        setError('凭证已保存但校验未通过');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -1570,7 +1636,11 @@ export function App() {
                 <p className="muted">
                   {loginIsWechat
                     ? '公众号使用官方 API：绑定 AppID / AppSecret（写入草稿箱，不自动群发）。'
-                    : '将打开本机 Chrome（独立 profile）。mock 用 fixture；其它平台需扫码。'}
+                    : loginIsX
+                      ? 'X 使用官方 API：绑定 API Key / Access Token（按次计费，请自查控制台）。'
+                      : loginIsYouTube
+                        ? 'YouTube 使用官方 Data API：绑定 OAuth Client 与 Refresh Token（默认上传为私密）。'
+                        : '将打开本机 Chrome（独立 profile）。mock 用 fixture；其它平台需扫码。'}
                 </p>
                 <label className="field">
                   平台插件
@@ -1598,54 +1668,170 @@ export function App() {
                     }}
                   />
                 </label>
-                {loginIsWechat ? (
+                {loginIsCredentialBind ? (
                   <>
-                    <div className="hint-box" role="note">
-                      <strong>如何获取 AppID / AppSecret</strong>
-                      <ol>
-                        <li>
-                          登录微信公众平台：
-                          <a
-                            href="https://mp.weixin.qq.com"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            https://mp.weixin.qq.com
-                          </a>
-                        </li>
-                        <li>左侧进入「设置与开发」→「基本配置」</li>
-                        <li>在「开发者 ID (AppID)」查看 AppID（wx 开头）</li>
-                        <li>
-                          在「开发者密码 (AppSecret)」点生成/重置后复制（只显示一次）
-                        </li>
-                        <li>同页将本机出口 IP 加入「IP 白名单」</li>
-                      </ol>
-                    </div>
-                    <label className="field">
-                      AppID
-                      <input
-                        value={wechatAppId}
-                        placeholder="wx…"
-                        onChange={(e) => {
-                          setWechatAppId(e.target.value);
-                        }}
-                      />
-                    </label>
-                    <label className="field">
-                      AppSecret
-                      <input
-                        type="password"
-                        value={wechatAppSecret}
-                        onChange={(e) => {
-                          setWechatAppSecret(e.target.value);
-                        }}
-                      />
-                    </label>
+                    {loginIsWechat ? (
+                      <>
+                        <div className="hint-box" role="note">
+                          <strong>如何获取 AppID / AppSecret</strong>
+                          <ol>
+                            <li>
+                              登录微信公众平台：
+                              <a
+                                href="https://mp.weixin.qq.com"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                https://mp.weixin.qq.com
+                              </a>
+                            </li>
+                            <li>左侧进入「设置与开发」→「基本配置」</li>
+                            <li>
+                              在「开发者 ID (AppID)」查看 AppID（wx 开头）
+                            </li>
+                            <li>
+                              在「开发者密码 (AppSecret)」点生成/重置后复制（只显示一次）
+                            </li>
+                            <li>同页将本机出口 IP 加入「IP 白名单」</li>
+                          </ol>
+                        </div>
+                        <label className="field">
+                          AppID
+                          <input
+                            value={wechatAppId}
+                            placeholder="wx…"
+                            onChange={(e) => {
+                              setWechatAppId(e.target.value);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          AppSecret
+                          <input
+                            type="password"
+                            value={wechatAppSecret}
+                            onChange={(e) => {
+                              setWechatAppSecret(e.target.value);
+                            }}
+                          />
+                        </label>
+                      </>
+                    ) : null}
+                    {loginIsX ? (
+                      <>
+                        <div className="hint-box" role="note">
+                          <strong>如何获取 X API 凭证</strong>
+                          <ol>
+                            <li>
+                              打开{' '}
+                              <a
+                                href="https://console.x.com"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                console.x.com
+                              </a>{' '}
+                              创建 App
+                            </li>
+                            <li>在 Keys and tokens 生成 API Key / Secret</li>
+                            <li>
+                              生成 Access Token / Secret（需具备发帖权限）
+                            </li>
+                            <li>注意：新开发者多为按次计费，请自查定价</li>
+                          </ol>
+                        </div>
+                        <label className="field">
+                          API Key
+                          <input
+                            value={xApiKey}
+                            onChange={(e) => {
+                              setXApiKey(e.target.value);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          API Key Secret
+                          <input
+                            type="password"
+                            value={xApiSecret}
+                            onChange={(e) => {
+                              setXApiSecret(e.target.value);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          Access Token
+                          <input
+                            value={xAccessToken}
+                            onChange={(e) => {
+                              setXAccessToken(e.target.value);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          Access Token Secret
+                          <input
+                            type="password"
+                            value={xAccessTokenSecret}
+                            onChange={(e) => {
+                              setXAccessTokenSecret(e.target.value);
+                            }}
+                          />
+                        </label>
+                      </>
+                    ) : null}
+                    {loginIsYouTube ? (
+                      <>
+                        <div className="hint-box" role="note">
+                          <strong>如何获取 YouTube OAuth 凭证</strong>
+                          <ol>
+                            <li>
+                              Google Cloud Console 启用 YouTube Data API v3
+                            </li>
+                            <li>创建 OAuth 客户端（桌面应用）拿到 ID/Secret</li>
+                            <li>
+                              本机完成一次授权，取得含 youtube.upload
+                              的 refresh_token
+                            </li>
+                            <li>默认上传为私密，可在 Studio 再公开</li>
+                          </ol>
+                        </div>
+                        <label className="field">
+                          Client ID
+                          <input
+                            value={ytClientId}
+                            onChange={(e) => {
+                              setYtClientId(e.target.value);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          Client Secret
+                          <input
+                            type="password"
+                            value={ytClientSecret}
+                            onChange={(e) => {
+                              setYtClientSecret(e.target.value);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          Refresh Token
+                          <input
+                            type="password"
+                            value={ytRefreshToken}
+                            onChange={(e) => {
+                              setYtRefreshToken(e.target.value);
+                            }}
+                          />
+                        </label>
+                      </>
+                    ) : null}
                     <button
                       type="button"
                       className="btn"
                       disabled={!client || binding}
-                      onClick={() => void onBindWechat()}
+                      onClick={() => void onBindCredentials()}
                     >
                       {binding ? '校验中…' : '绑定凭证'}
                     </button>
@@ -1698,7 +1884,7 @@ export function App() {
                             </td>
                             <td>
                               <div className="row">
-                                {a.pluginId !== 'wechat-mp' ? (
+                                {!isCredentialPlugin(a.pluginId) ? (
                                   <button
                                     type="button"
                                     className="btn secondary"

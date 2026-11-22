@@ -218,12 +218,26 @@ export async function checkAccountSession(input: {
 }): Promise<boolean> {
   const { db, account, plugin } = input;
 
-  // 公众号：凭证 + token，不走 Chrome
+  // 官方 API 凭证型：不走 Chrome
   if (plugin.manifest.id === 'wechat-mp') {
     const { checkWechatMpSession } = await import(
       '../adapters/wechatMp/bindAccount.js'
     );
     const ok = await checkWechatMpSession(account);
+    updateAccountStatus(db, account.id, ok ? 'logged_in' : 'expired');
+    return ok;
+  }
+  if (plugin.manifest.id === 'x') {
+    const { checkXSession } = await import('../adapters/x/bindAccount.js');
+    const ok = await checkXSession(account);
+    updateAccountStatus(db, account.id, ok ? 'logged_in' : 'expired');
+    return ok;
+  }
+  if (plugin.manifest.id === 'youtube') {
+    const { checkYouTubeSession } = await import(
+      '../adapters/youtube/bindAccount.js'
+    );
+    const ok = await checkYouTubeSession(account);
     updateAccountStatus(db, account.id, ok ? 'logged_in' : 'expired');
     return ok;
   }

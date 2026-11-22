@@ -97,6 +97,8 @@ import { getDefaultDataDir } from '../paths.js';
 import { runPublishJob } from '../publish/runner.js';
 import type { SerialQueue } from '../queue/serialQueue.js';
 import { bindWechatMpAccount } from '../adapters/wechatMp/bindAccount.js';
+import { bindXAccount } from '../adapters/x/bindAccount.js';
+import { bindYouTubeAccount } from '../adapters/youtube/bindAccount.js';
 import {
   checkAccountSession,
   listAllAccounts,
@@ -527,11 +529,18 @@ async function handleAccounts(
       name?: string;
       appid?: string;
       appsecret?: string;
+      apiKey?: string;
+      apiSecret?: string;
+      accessToken?: string;
+      accessTokenSecret?: string;
+      clientId?: string;
+      clientSecret?: string;
+      refreshToken?: string;
     };
-    if (!body.plugin || !body.name || !body.appid || !body.appsecret) {
+    if (!body.plugin || !body.name) {
       sendJson(res, 400, {
         ok: false,
-        error: 'plugin、name、appid、appsecret 均必填',
+        error: 'plugin 与 name 必填',
       });
       return true;
     }
@@ -543,14 +552,71 @@ async function handleAccounts(
       return true;
     }
     try {
-      const result = await bindWechatMpAccount({
-        db: ctx.db,
-        dataDir: ctx.dataDir,
-        plugin,
-        name: body.name,
-        appid: body.appid,
-        appsecret: body.appsecret,
-      });
+      let result: { account: unknown; loggedIn: boolean };
+      if (body.plugin === 'wechat-mp') {
+        if (!body.appid || !body.appsecret) {
+          sendJson(res, 400, {
+            ok: false,
+            error: '公众号需填写 appid、appsecret',
+          });
+          return true;
+        }
+        result = await bindWechatMpAccount({
+          db: ctx.db,
+          dataDir: ctx.dataDir,
+          plugin,
+          name: body.name,
+          appid: body.appid,
+          appsecret: body.appsecret,
+        });
+      } else if (body.plugin === 'x') {
+        if (
+          !body.apiKey ||
+          !body.apiSecret ||
+          !body.accessToken ||
+          !body.accessTokenSecret
+        ) {
+          sendJson(res, 400, {
+            ok: false,
+            error:
+              'X 需填写 apiKey、apiSecret、accessToken、accessTokenSecret',
+          });
+          return true;
+        }
+        result = await bindXAccount({
+          db: ctx.db,
+          dataDir: ctx.dataDir,
+          plugin,
+          name: body.name,
+          apiKey: body.apiKey,
+          apiSecret: body.apiSecret,
+          accessToken: body.accessToken,
+          accessTokenSecret: body.accessTokenSecret,
+        });
+      } else if (body.plugin === 'youtube') {
+        if (!body.clientId || !body.clientSecret || !body.refreshToken) {
+          sendJson(res, 400, {
+            ok: false,
+            error: 'YouTube 需填写 clientId、clientSecret、refreshToken',
+          });
+          return true;
+        }
+        result = await bindYouTubeAccount({
+          db: ctx.db,
+          dataDir: ctx.dataDir,
+          plugin,
+          name: body.name,
+          clientId: body.clientId,
+          clientSecret: body.clientSecret,
+          refreshToken: body.refreshToken,
+        });
+      } else {
+        sendJson(res, 400, {
+          ok: false,
+          error: `插件 ${body.plugin} 不支持凭证绑定`,
+        });
+        return true;
+      }
       sendJson(res, 200, {
         ok: true,
         loggedIn: result.loggedIn,
