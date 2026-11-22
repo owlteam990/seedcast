@@ -69,7 +69,7 @@ const CODE_PUBLISHERS: Record<
     publish: publishBaijiahaoDraft,
   },
   toutiao: {
-    label: '写入头条号草稿（Web API）',
+    label: '写入头条号图文（Web API）',
     publish: publishToutiaoDraft,
   },
 };

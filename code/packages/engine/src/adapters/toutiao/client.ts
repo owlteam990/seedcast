@@ -1,12 +1,17 @@
 /**
- * 今日头条号（mp.toutiao.com）Web API 客户端（Cookie）
+ * 今日头条号（mp.toutiao.com）Web API 客户端（Cookie + 页内 fetch）
  * 协议形态参考公开社区实现，洁净室重写；非 GPL 源码拷贝。
  *
- * 会话检测：多路径 media_info + 创作台落地页兜底（避免误报 expired）。
+ * 实测（2026-11-22）：
+ * - save=0 常返回 code=7050 / pgc_id=0（保存失败）
+ * - save=1 可返回真实 pgc_id；须校验 code 且拒绝 pgc_id=0，避免假成功
+ * - 页内 fetch 会附带 msToken/a_bogus，比纯 context.request 更稳
  *
  * @author Seedcast
  * @date 2026-11-22
  */
+
+import type { Page } from 'playwright';
 
 /** 头条号后台根 */
 export const TOUTIAO_MP_ORIGIN = 'https://mp.toutiao.com';
@@ -21,6 +26,10 @@ export const TOUTIAO_ARTICLE_EDITOR =
 /** 图文编辑页（旧版兼容） */
 export const TOUTIAO_GRAPHIC_PUBLISH =
   `${TOUTIAO_MP_ORIGIN}/profile_v4/graphic/publish`;
+
+/** 图片上传 */
+export const TOUTIAO_UPLOAD_PICTURE =
+  `${TOUTIAO_MP_ORIGIN}/mp/agw/article_material/photo/upload_picture?type=ueditor&pgc_watermark=0&action=uploadimage&encode=utf-8`;
 
 /**
  * 会话内 fetch
@@ -117,8 +126,6 @@ function parseMediaUser(data: unknown): {
  * @param landingUrl 打开后的 URL
  * @param landingHtml 页面 HTML
  * @returns 伪用户信息或 null
- * @author Seedcast
- * @date 2026-11-22
  */
 export function detectToutiaoLoginFromLanding(
   landingUrl: string,
@@ -165,8 +172,6 @@ export function detectToutiaoLoginFromLanding(
  *
  * @param fetchFn 带 Cookie 的 fetch
  * @returns 用户信息；未登录返回 null
- * @author Seedcast
- * @date 2026-11-22
  */
 export async function getToutiaoMediaInfo(fetchFn: CookieFetch): Promise<{
   userId: string;
@@ -202,35 +207,199 @@ export async function getToutiaoMediaInfo(fetchFn: CookieFetch): Promise<{
 }
 
 /**
- * 保存图文草稿（save=0）
+ * 判断 pgc_id 是否有效（拒绝 0 / 空）
  *
- * @param fetchFn 带 Cookie 的 fetch
- * @param input 标题与 HTML
- * @returns pgc_id
- * @author Seedcast
- * @date 2026-11-22
+ * @param raw 原始值
+ * @returns 规范化 ID 或 null
  */
-export async function saveToutiaoArticleDraft(
-  fetchFn: CookieFetch,
-  input: { title: string; html: string },
-): Promise<{ pgcId: string }> {
-  // 1. 热一下新/旧发布页，部分会话依赖 Referer 链路
-  for (const editor of [TOUTIAO_ARTICLE_EDITOR, TOUTIAO_GRAPHIC_PUBLISH]) {
-    try {
-      await fetchFn(
-        editor,
-        { method: 'GET' },
+export function normalizeToutiaoPgcId(raw: unknown): string | null {
+  if (raw == null) {
+    return null;
+  }
+  const id = String(raw).trim();
+  if (!id || id === '0') {
+    return null;
+  }
+  return id;
+}
+
+/**
+ * 解析 publish 接口 JSON
+ *
+ * @param text 响应体
+ * @returns 结果
+ */
+function parsePublishResponse(text: string): {
+  code: number | string | undefined;
+  message: string;
+  pgcId: string | null;
+  raw: Record<string, unknown>;
+} {
+  let body: Record<string, unknown>;
+  try {
+    body = JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    throw new Error(`头条发布接口非 JSON: ${text.slice(0, 200)}`);
+  }
+  const data = (body.data || {}) as Record<string, unknown>;
+  const code = (body.code ?? body.err_no) as number | string | undefined;
+  const message = String(
+    body.message || body.msg || body.reason || `code=${String(code)}`,
+  );
+  const pgcId = normalizeToutiaoPgcId(data.pgc_id ?? data.id);
+  return { code, message, pgcId, raw: body };
+}
+
+/**
+ * 业务码是否成功
+ *
+ * @param code 业务码
+ * @returns 是否成功
+ */
+function isOkCode(code: number | string | undefined): boolean {
+  return code === 0 || code === '0' || code === 200 || code === '200';
+}
+
+/**
+ * 上传封面图（页内 FormData）
+ *
+ * @param page 已打开创作台的页面
+ * @param bytes 图片字节
+ * @param filename 文件名
+ * @returns 封面结构（供 pgc_feed_covers）
+ */
+export async function uploadToutiaoCover(
+  page: Page,
+  bytes: Uint8Array,
+  filename = 'cover.jpg',
+): Promise<{
+  id: number;
+  url: string;
+  uri: string;
+  origin_uri: string;
+  thumb_width: number;
+  thumb_height: number;
+}> {
+  const uploaded = await page.evaluate(
+    async ({ uploadUrl, byteArr, name }) => {
+      const form = new FormData();
+      form.append(
+        'upfile',
+        new Blob([new Uint8Array(byteArr)], { type: 'image/jpeg' }),
+        name,
+      );
+      const res = await fetch(uploadUrl, {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+      });
+      const text = await res.text();
+      return { status: res.status, text };
+    },
+    {
+      uploadUrl: TOUTIAO_UPLOAD_PICTURE,
+      byteArr: Array.from(bytes),
+      name: filename,
+    },
+  );
+
+  let body: Record<string, unknown>;
+  try {
+    body = JSON.parse(uploaded.text) as Record<string, unknown>;
+  } catch {
+    throw new Error(
+      `头条上传封面非 JSON (HTTP ${uploaded.status}): ${uploaded.text.slice(0, 160)}`,
+    );
+  }
+  const code = body.code ?? body.err_no;
+  if (code !== undefined && code !== 0 && code !== '0') {
+    throw new Error(
+      `头条上传封面失败: ${String(body.message || body.msg || code)}`,
+    );
+  }
+  const url = String(body.url || body.web_url || '');
+  const uri = String(body.web_uri || body.origin_web_uri || '');
+  if (!url || !uri) {
+    throw new Error(`头条上传封面缺 url/uri: ${uploaded.text.slice(0, 200)}`);
+  }
+  return {
+    id: 0,
+    url,
+    uri,
+    origin_uri: String(body.origin_web_uri || uri),
+    thumb_width: Number(body.width || 300),
+    thumb_height: Number(body.height || 300),
+  };
+}
+
+/**
+ * 页内调用 publish 接口
+ *
+ * @param page 页面
+ * @param fields 表单字段
+ * @returns 解析结果
+ */
+async function publishViaPage(
+  page: Page,
+  fields: Record<string, string>,
+): Promise<ReturnType<typeof parsePublishResponse>> {
+  const text = await page.evaluate(
+    async ({ origin, fields: f }) => {
+      const form = new URLSearchParams(f);
+      const res = await fetch(
+        `${origin}/mp/agw/article/publish?source=mp&type=article`,
         {
-          accept: 'text/html',
-          Referer: TOUTIAO_MP_HOME,
+          method: 'POST',
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded',
+            accept: 'application/json, text/plain, */*',
+            'x-requested-with': 'XMLHttpRequest',
+          },
+          body: form.toString(),
+          credentials: 'include',
         },
       );
+      return res.text();
+    },
+    { origin: TOUTIAO_MP_ORIGIN, fields },
+  );
+  return parsePublishResponse(text);
+}
+
+/**
+ * 写入头条图文（优先草稿 save=0；失败则 save=1 提交）
+ *
+ * @param page Playwright 页面（须已登录）
+ * @param input 标题 HTML 与可选封面
+ * @returns pgcId 与模式说明
+ */
+export async function saveToutiaoArticleDraft(
+  page: Page,
+  input: {
+    title: string;
+    html: string;
+    coverBytes?: Uint8Array | null;
+  },
+): Promise<{ pgcId: string; mode: 'draft' | 'submit'; note: string }> {
+  // 1. 打开编辑页，让页内签名环境就绪
+  await page.goto(TOUTIAO_ARTICLE_EDITOR, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
+  await page.waitForTimeout(2000);
+
+  let coversJson = '[]';
+  if (input.coverBytes && input.coverBytes.length > 0) {
+    try {
+      const cover = await uploadToutiaoCover(page, input.coverBytes);
+      coversJson = JSON.stringify([cover]);
     } catch {
-      // 可忽略
+      // 封面失败不阻断提交
+      coversJson = '[]';
     }
   }
 
-  const form = new URLSearchParams({
+  const baseFields: Record<string, string> = {
     title: input.title,
     content: input.html,
     article_ad_type: '2',
@@ -238,53 +407,43 @@ export async function saveToutiaoArticleDraft(
     from_diagnosis: '0',
     origin_debut_check_pgc_normal: '0',
     tree_plan_article: '0',
-    save: '0',
     pgc_id: '0',
-    pgc_feed_covers: '[]',
-  });
-
-  const res = await fetchFn(
-    `${TOUTIAO_MP_ORIGIN}/mp/agw/article/publish?source=mp&type=article`,
-    {
-      method: 'POST',
-      body: form.toString(),
-    },
-    {
-      ...toutiaoHeaders(),
-      'content-type': 'application/x-www-form-urlencoded',
-      Referer: TOUTIAO_ARTICLE_EDITOR,
-    },
-  );
-
-  const text = await res.text();
-  let body: {
-    code?: number | string;
-    message?: string;
-    msg?: string;
-    data?: { pgc_id?: string | number; id?: string | number };
+    pgc_feed_covers: coversJson,
   };
-  try {
-    body = JSON.parse(text) as typeof body;
-  } catch {
-    throw new Error(
-      `头条保存草稿非 JSON (HTTP ${res.status}): ${text.slice(0, 200)}`,
-    );
+
+  // 2. 优先草稿
+  const draft = await publishViaPage(page, {
+    ...baseFields,
+    save: '0',
+  });
+  if (isOkCode(draft.code) && draft.pgcId) {
+    return {
+      pgcId: draft.pgcId,
+      mode: 'draft',
+      note: '已写入头条草稿箱',
+    };
   }
 
-  const pgcId = body.data?.pgc_id ?? body.data?.id;
-  if (pgcId == null) {
-    throw new Error(
-      body.message ||
-        body.msg ||
-        `头条保存草稿失败 (HTTP ${res.status})`,
-    );
+  // 3. 草稿失败（常见 7050）→ 提交（save=1），仍须真实 pgc_id
+  const submitted = await publishViaPage(page, {
+    ...baseFields,
+    save: '1',
+  });
+  if (isOkCode(submitted.code) && submitted.pgcId) {
+    return {
+      pgcId: submitted.pgcId,
+      mode: 'submit',
+      note: `草稿模式失败（${draft.message}），已改为平台提交`,
+    };
   }
 
-  return { pgcId: String(pgcId) };
+  throw new Error(
+    `头条写入失败：草稿=${draft.message}；提交=${submitted.message}`,
+  );
 }
 
 /**
- * 草稿编辑链接
+ * 草稿/文章编辑链接
  *
  * @param pgcId 文章 ID
  * @returns URL
