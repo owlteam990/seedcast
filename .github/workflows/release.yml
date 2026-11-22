@@ -1,0 +1,180 @@
+# Seedcast：tag 触发 macOS (arm64 dmg) + Windows (x64 NSIS) 构建并上传 GitHub Release
+# 用法见 code/RELEASE.md
+#
+# 首版不做 Apple 公证 / Windows 代码签名。
+
+name: Release
+
+"on":
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "要发布的已有 tag（如 v0.1.0-rc.1）；构建该 tag 指向的提交"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: code
+
+env:
+  # 避免 CI 交互
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: macos
+          - os: windows-latest
+            platform: windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: code/pnpm-lock.yaml
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: code/apps/desktop/src-tauri -> target
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @seedcast/shared build
+
+      - name: Build Tauri app (engine sidecar + installer)
+        # tauri:build = engine build → bun sidecar → tauri build
+        run: pnpm --filter @seedcast/app tauri:build
+
+      - name: Collect installers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          BUNDLE="apps/desktop/src-tauri/target/release/bundle"
+          if [[ "${{ matrix.platform }}" == "macos" ]]; then
+            if [[ ! -d "$BUNDLE/dmg" ]]; then
+              echo "缺少 dmg 目录: $BUNDLE/dmg" >&2
+              find apps/desktop/src-tauri/target -name '*.dmg' 2>/dev/null | head -20 || true
+              exit 1
+            fi
+            cp -f "$BUNDLE"/dmg/*.dmg dist-release/ || true
+          else
+            if [[ ! -d "$BUNDLE/nsis" ]]; then
+              echo "缺少 nsis 目录: $BUNDLE/nsis" >&2
+              find apps/desktop/src-tauri/target -name '*.exe' 2>/dev/null | head -20 || true
+              exit 1
+            fi
+            cp -f "$BUNDLE"/nsis/*.exe dist-release/ || true
+          fi
+          echo "=== dist-release ==="
+          ls -lah dist-release
+          count="$(find dist-release -type f | wc -l | tr -d ' ')"
+          if [[ "$count" -lt 1 ]]; then
+            echo "未收集到任何安装包" >&2
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: seedcast-${{ matrix.platform }}
+          path: code/dist-release/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List assets and checksums
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          echo "=== release-assets ==="
+          find release-assets -type f -print
+          cd release-assets
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum * > SHA256SUMS.txt
+          else
+            shasum -a 256 * > SHA256SUMS.txt
+          fi
+          cat SHA256SUMS.txt
+
+      - name: Resolve tag name
+        id: tag
+        shell: bash
+        working-directory: .
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "name=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: Seedcast ${{ steps.tag.outputs.name }}
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.name, '-') }}
+          generate_release_notes: true
+          body: |
+            ## 安装说明
+
+            - **macOS**：下载 `.dmg`。未签名时若 Gatekeeper 拦截，请对 App **右键 → 打开**。
+            - **Windows**：下载 NSIS 安装包（`*-setup.exe`）。未签名时可能触发 SmartScreen，选择仍要运行即可。
+            - 浏览器类平台插件依赖本机已安装 **Google Chrome**。
+            - 校验：对照附件 `SHA256SUMS.txt`。
+
+            详细发版流程见仓库 `code/RELEASE.md`。
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

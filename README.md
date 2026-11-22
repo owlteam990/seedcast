@@ -150,6 +150,7 @@ Seedcast 走的是 **本地桌面 + 开源插件** 路线：
 
 ```
 .
+├── .github/workflows/        # CI：v* tag → mac dmg + win NSIS → Release
 ├── assets/screenshots/       # README 界面截图
 ├── code/                     # 可运行 monorepo（GitHub 主代码）
 │   ├── apps/desktop          # Tauri 2 + React 桌面 GUI
@@ -158,7 +159,8 @@ Seedcast 走的是 **本地桌面 + 开源插件** 路线：
 │   │   ├── shared            # 共享类型与常量
 │   │   └── plugin-sdk        # 插件契约
 │   ├── plugins/              # 官方平台插件
-│   └── scripts/              # 如 macOS 打包脚本
+│   ├── scripts/              # 如 macOS 打包脚本
+│   └── RELEASE.md            # GitHub 发版操作手册
 ├── LICENSE                   # Apache License 2.0
 └── README.md                 # 本说明
 ```
@@ -182,11 +184,23 @@ pnpm --filter @seedcast/engine typecheck
 pnpm dev:engine          # 另开终端
 pnpm --filter @seedcast/app tauri:dev
 
-# macOS 打包（示例）
+# macOS 本机打包（示例）
 pnpm build:mac
 ```
 
 **要求：** Node 20+、pnpm 9+、本机 Chrome；打 macOS / Windows 包时还需对应平台的 Rust / Tauri 工具链。
+
+### GitHub 自动发版
+
+推送 `v*` tag 后，Actions 构建 macOS `.dmg` 与 Windows NSIS 并上传到 [Releases](https://github.com/owlteam990/seedcast/releases)：
+
+```bash
+# bump code/apps/desktop/src-tauri/tauri.conf.json 的 version 并 push main 后：
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+步骤与注意事项见 [`code/RELEASE.md`](./code/RELEASE.md)。
 
 更细的引擎 API、插件契约与打包说明见 `code/` 内各包 README 与 `plugins/*/NOTES.md`。
 
@@ -200,8 +214,9 @@ pnpm build:mac
 - [x] CSDN / 简书 / 百家号 / 今日头条文章草稿
 - [x] 公网图床（免费渠道 + S3/OSS）
 - [x] MCP / CLI 编排（AI 代理经 stdio / 命令行调用同一本地 API）
+- [x] CI 自动发版（`v*` tag → mac dmg + win NSIS → GitHub Release）
 - [ ] 更多平台插件与社区贡献流程
-- [ ] 正式自动更新与双端签名发行包
+- [ ] 正式自动更新与双端签名 / 公证
 
 ---
 
