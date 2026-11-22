@@ -20,6 +20,8 @@
     "dev:app": "pnpm --filter @seedcast/app dev",
     "dev:tauri": "pnpm --filter @seedcast/engine build && pnpm --filter @seedcast/app tauri:dev",
     "sidecar": "pnpm --filter @seedcast/engine build && pnpm --filter @seedcast/engine sidecar",
+    "seedcast": "pnpm --filter @seedcast/engine seedcast",
+    "mcp": "pnpm --filter @seedcast/engine mcp",
     "build": "pnpm -r run build",
     "build:app": "pnpm --filter @seedcast/app tauri:build",
     "build:mac": "./scripts/build-mac.sh",

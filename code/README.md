@@ -32,6 +32,24 @@ pnpm --filter @seedcast/engine typecheck
 
 依赖：Node 20+、pnpm 9+、本机已安装 Chrome。
 
+## CLI / MCP（AI 编排）
+
+引擎暴露本地 HTTP 后，可用同一 API 做脚本与 AI 代理：
+
+```bash
+# 先启动引擎
+pnpm --filter @seedcast/engine start
+
+# CLI（pnpm 传参用 --，脚本会忽略该分隔符）
+pnpm seedcast -- ping
+pnpm seedcast -- contents create --title "Demo" --body "hello"
+
+# MCP stdio（Claude Desktop / Cursor 等）
+pnpm mcp
+```
+
+说明见 [`packages/engine/MCP.md`](./packages/engine/MCP.md)。
+
 ## 不会提交到仓库的内容
 
 日志、`~/.seedcast` 本地数据、SQLite 文件、临时测试脚本（`scripts/local/`、`*.local.*`）、测试报告与截图产物等——详见 `.gitignore`。

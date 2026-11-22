@@ -29,6 +29,9 @@ yarn-error.log*
 # --- docs (local only; not published to GitHub) ---
 docs/
 
+# --- agent memory (local only) ---
+AGENTS.md
+
 # --- local runtime / user data (never commit) ---
 local-data/
 .seedcast/

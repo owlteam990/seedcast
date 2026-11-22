@@ -8,6 +8,40 @@
 
 > 数据只留在你的电脑上。账号会话、内容库、发布记录全部本地存储，**无云端账号托管、无内容上传到自有服务器**。
 
+## 界面预览
+
+左侧导航 + 右侧工作区：内容库、发布中心、发布记录、账号库、设置一应俱全。
+
+### 内容库
+
+Markdown 分栏编辑，草稿 / 已发布筛选，一键去发布。
+
+![内容库](./assets/screenshots/01-contents.jpg)
+
+### 发布中心
+
+选内容、选平台与账号，一份稿件播到多个目标。
+
+![发布中心](./assets/screenshots/02-publish.jpg)
+
+### 发布记录
+
+每目标成败与错误码可读，成功可直达平台链接。
+
+![发布记录](./assets/screenshots/03-records.jpg)
+
+### 账号库
+
+按插件管理平台能力与登录账号（公众号 / 知乎 / CSDN / 简书 / 百家号 / 头条等）。
+
+![账号库](./assets/screenshots/04-accounts.jpg)
+
+### 设置
+
+本机数据目录、公网图床（Litterbox / S3·OSS / SM.MS / ImgBB）均可配置。
+
+![设置](./assets/screenshots/05-settings.jpg)
+
 ---
 
 ## 为什么做 Seedcast
@@ -116,6 +150,7 @@ Seedcast 走的是 **本地桌面 + 开源插件** 路线：
 
 ```
 .
+├── assets/screenshots/       # README 界面截图
 ├── code/                     # 可运行 monorepo（GitHub 主代码）
 │   ├── apps/desktop          # Tauri 2 + React 桌面 GUI
 │   ├── packages/
@@ -164,9 +199,9 @@ pnpm build:mac
 - [x] 知乎多类型发布与导入
 - [x] CSDN / 简书 / 百家号 / 今日头条文章草稿
 - [x] 公网图床（免费渠道 + S3/OSS）
+- [x] MCP / CLI 编排（AI 代理经 stdio / 命令行调用同一本地 API）
 - [ ] 更多平台插件与社区贡献流程
 - [ ] 正式自动更新与双端签名发行包
-- [ ] MCP / CLI 编排（AI 代理调用发布链路）
 
 ---
 

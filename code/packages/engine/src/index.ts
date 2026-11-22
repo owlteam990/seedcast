@@ -35,3 +35,13 @@ export {
   removeAccount,
   listAllAccounts,
 } from './session/accountsService.js';
+export {
+  resolveClientDataDir,
+  readEngineMetaFile,
+  discoverEngineMeta,
+} from './client/discover.js';
+export {
+  LocalApiClient,
+  type PublishTargetInput,
+  type PublishAggregateResult,
+} from './client/localApi.js';
