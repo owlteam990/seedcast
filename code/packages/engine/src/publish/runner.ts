@@ -16,10 +16,13 @@ import type {
 } from '@seedcast/shared';
 import { SeedcastErrorCode } from '@seedcast/shared';
 import { publishBaijiahaoDraft } from '../adapters/baijiahao/publish.js';
+import { publishBilibiliDraft } from '../adapters/bilibili/publish.js';
 import { publishCsdnDraft } from '../adapters/csdn/publish.js';
+import { publishDouyinDraft } from '../adapters/douyin/publish.js';
 import { publishJianshuDraft } from '../adapters/jianshu/publish.js';
 import { publishToutiaoDraft } from '../adapters/toutiao/publish.js';
 import { publishWechatMpDraft } from '../adapters/wechatMp/publish.js';
+import { publishWeiboDraft } from '../adapters/weibo/publish.js';
 import { getAccount } from '../db/accounts.js';
 import type { SeedcastDatabase } from '../db/database.js';
 import { getContent } from '../db/contents.js';
@@ -71,6 +74,18 @@ const CODE_PUBLISHERS: Record<
   toutiao: {
     label: '写入头条号图文（Web API）',
     publish: publishToutiaoDraft,
+  },
+  weibo: {
+    label: '写入微博头条文章草稿（Web API）',
+    publish: publishWeiboDraft,
+  },
+  bilibili: {
+    label: '写入 B站专栏草稿（Web API）',
+    publish: publishBilibiliDraft,
+  },
+  douyin: {
+    label: '写入抖音创作者中心草稿（页面自动化）',
+    publish: publishDouyinDraft,
   },
 };
 

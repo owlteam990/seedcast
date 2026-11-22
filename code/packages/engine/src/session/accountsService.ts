@@ -182,6 +182,24 @@ async function verifyCookieApiSession(
     );
     return checkToutiaoSession(account);
   }
+  if (pluginId === 'weibo') {
+    const { checkWeiboSession } = await import(
+      '../adapters/weibo/checkSession.js'
+    );
+    return checkWeiboSession(account);
+  }
+  if (pluginId === 'bilibili') {
+    const { checkBilibiliSession } = await import(
+      '../adapters/bilibili/checkSession.js'
+    );
+    return checkBilibiliSession(account);
+  }
+  if (pluginId === 'douyin') {
+    const { checkDouyinSession } = await import(
+      '../adapters/douyin/checkSession.js'
+    );
+    return checkDouyinSession(account);
+  }
   return null;
 }
 

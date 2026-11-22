@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-weibo",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "微博头条文章草稿（Cookie + Web API）"
+}

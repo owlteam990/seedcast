@@ -1,0 +1,26 @@
+{
+  "id": "douyin",
+  "name": "抖音",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "adapter": "code",
+  "entry": "builtin",
+  "contentTypes": ["article", "imageText"],
+  "platform": {
+    "home": "https://creator.douyin.com/",
+    "loginUrl": "https://creator.douyin.com/",
+    "sessionCheck": {
+      "url": "https://creator.douyin.com/",
+      "loggedInSelector": "loggedIn",
+      "loggedInCookie": "sessionid,sessionid_ss,sid_tt,uid_tt",
+      "timeoutMs": 15000
+    }
+  },
+  "capabilities": {
+    "draft": true,
+    "nativeSchedule": false,
+    "publishTypes": [
+      { "id": "draft", "label": "写入创作者中心草稿" }
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+{
+  "loggedIn": ".header-avatar | .user-name | img.bili-avatar-img | a[href*='space.bilibili.com']"
+}

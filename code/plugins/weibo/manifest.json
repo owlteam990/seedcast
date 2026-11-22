@@ -1,0 +1,26 @@
+{
+  "id": "weibo",
+  "name": "微博",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "adapter": "code",
+  "entry": "builtin",
+  "contentTypes": ["article"],
+  "platform": {
+    "home": "https://weibo.com/",
+    "loginUrl": "https://weibo.com/login.php",
+    "sessionCheck": {
+      "url": "https://card.weibo.com/article/v5/editor",
+      "loggedInSelector": "loggedIn",
+      "loggedInCookie": "SUB,SUBP,SCF",
+      "timeoutMs": 15000
+    }
+  },
+  "capabilities": {
+    "draft": true,
+    "nativeSchedule": false,
+    "publishTypes": [
+      { "id": "draft", "label": "写入头条文章草稿" }
+    ]
+  }
+}

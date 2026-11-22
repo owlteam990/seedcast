@@ -117,7 +117,7 @@ async function main(): Promise<void> {
         plugin: z
           .string()
           .optional()
-          .describe('插件 ID，如 zhihu / wechat-mp / csdn'),
+          .describe('插件 ID，如 zhihu / wechat-mp / csdn / weibo / bilibili / douyin'),
       },
     },
     async ({ plugin }) => {

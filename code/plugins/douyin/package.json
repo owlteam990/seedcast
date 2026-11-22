@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-douyin",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "抖音创作者中心草稿（Cookie 会话 + 页面自动化）"
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "B站专栏发布设置",
+  "properties": {
+    "tid": {
+      "type": ["integer", "string"],
+      "title": "分区 tid",
+      "description": "可选；缺省 4（动画杂谈等常见默认，可在创作中心改）",
+      "default": 4
+    }
+  }
+}

@@ -83,6 +83,9 @@ function syncOfficialPlugins() {
     'jianshu',
     'baijiahao',
     'toutiao',
+    'weibo',
+    'bilibili',
+    'douyin',
   ];
   mkdirSync(resourcesPlugins, { recursive: true });
   for (const id of ids) {
