@@ -26,6 +26,9 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# --- docs (local only; not published to GitHub) ---
+docs/
+
 # --- local runtime / user data (never commit) ---
 local-data/
 .seedcast/
