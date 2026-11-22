@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "CSDN 发布设置",
+  "properties": {
+    "tags": {
+      "type": "string",
+      "title": "标签",
+      "description": "逗号分隔；可选"
+    },
+    "categories": {
+      "type": "string",
+      "title": "分类专栏",
+      "description": "可选"
+    }
+  }
+}

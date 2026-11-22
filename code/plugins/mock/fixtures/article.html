@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Seedcast Mock Publish</title>
+  </head>
+  <body>
+    <h1>Mock 发布页</h1>
+    <label>标题 <input id="title" type="text" /></label>
+    <label>正文 <textarea id="content"></textarea></label>
+    <button id="submit" type="button">发布</button>
+    <p>结果：<a id="result-url" href="">（未发布）</a></p>
+    <div id="logged-in">已登录</div>
+    <script>
+      document.getElementById('submit').addEventListener('click', function () {
+        var title = document.getElementById('title').value || 'untitled';
+        var link = document.getElementById('result-url');
+        link.href = 'https://example.local/mock/' + encodeURIComponent(title);
+        link.textContent = link.href;
+      });
+    </script>
+  </body>
+</html>

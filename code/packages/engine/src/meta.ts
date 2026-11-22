@@ -34,21 +34,25 @@ export interface EngineMeta {
  * @author Seedcast
  * @date 2026-11-21
  */
-function generateToken(): string {
+export function generateToken(): string {
   return randomBytes(24).toString('hex');
 }
 
 /**
- * 创建并持久化引擎元信息（权限由进程 umask 决定；后续可收紧为 0600）
+ * 创建并持久化引擎元信息
  *
- * @param port 监听端口
+ * @param input 端口、Token、启动时间等
  * @param dataDir 数据根目录
  * @returns 写入的元信息
  * @author Seedcast
  * @date 2026-11-21
  */
-export function createEngineMeta(
-  port: number,
+export function writeEngineMeta(
+  input: {
+    port: number;
+    token: string;
+    startedAt?: string;
+  },
   dataDir: string = getDefaultDataDir(),
 ): EngineMeta {
   // 1. 确保目录存在
@@ -57,13 +61,13 @@ export function createEngineMeta(
   // 2. 组装元信息
   const meta: EngineMeta = {
     host: '127.0.0.1',
-    port,
-    token: generateToken(),
+    port: input.port,
+    token: input.token,
     pid: process.pid,
-    startedAt: new Date().toISOString(),
+    startedAt: input.startedAt ?? new Date().toISOString(),
   };
 
-  // 3. 写入 engine.json（本地文件，不进 git）
+  // 3. 写入 engine.json（本地文件，不进 git；权限 0600）
   const metaPath = join(dataDir, ENGINE_META_FILE);
   writeFileSync(metaPath, `${JSON.stringify(meta, null, 2)}\n`, {
     encoding: 'utf8',
@@ -71,4 +75,17 @@ export function createEngineMeta(
   });
 
   return meta;
+}
+
+/**
+ * @deprecated 使用 writeEngineMeta
+ * @param port 端口
+ * @param dataDir 数据目录
+ * @returns 元信息
+ */
+export function createEngineMeta(
+  port: number,
+  dataDir: string = getDefaultDataDir(),
+): EngineMeta {
+  return writeEngineMeta({ port, token: generateToken() }, dataDir);
 }

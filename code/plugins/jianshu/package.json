@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-jianshu",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "简书号写作台草稿（Cookie + Web API）"
+}

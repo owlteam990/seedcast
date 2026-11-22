@@ -1,0 +1,3 @@
+{
+  "loggedIn": ".toolbar-btn--user | #toolbar-profile | .userinfo img | a.toolbar-btn[href*='/user']"
+}

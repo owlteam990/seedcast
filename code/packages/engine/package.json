@@ -8,17 +8,25 @@
   "bin": {
     "seedcast-engine": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx watch src/cli.ts",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "sidecar": "node ./scripts/build-sidecar.mjs",
+    "smoke:flow": "pnpm build && node dist/flow/runMockSmoke.js",
+    "smoke:pw": "tsx ./scripts/pw-probe.ts"
   },
   "dependencies": {
-    "@seedcast/shared": "workspace:*"
+    "@seedcast/shared": "workspace:*",
+    "better-sqlite3": "^13.2.0",
+    "playwright": "^1.65.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.19.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"

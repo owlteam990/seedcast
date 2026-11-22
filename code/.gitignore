@@ -37,6 +37,8 @@ blob-report/
 tmp/
 temp/
 .tmp/
+.tmp-smoke/
+**/.tmp-smoke/
 scripts/local/
 **/*.local.sh
 **/*.local.ts
@@ -54,3 +56,10 @@ Thumbs.db
 *.exe
 *.AppImage
 src-tauri/gen/
+
+# Tauri sidecar / 资源（由 pnpm sidecar 生成，勿提交大二进制）
+apps/desktop/src-tauri/binaries/seedcast-engine-*
+apps/desktop/src-tauri/resources/plugins/**
+!apps/desktop/src-tauri/resources/plugins/.gitkeep
+!apps/desktop/src-tauri/binaries/README.md
+apps/desktop/dist-bundle/

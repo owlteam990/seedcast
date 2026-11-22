@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-csdn",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "CSDN 博客草稿（Cookie + Web API）"
+}

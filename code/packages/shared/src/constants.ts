@@ -8,6 +8,9 @@
 /** 当前引擎支持的插件 apiVersion */
 export const ENGINE_API_VERSION = 1;
 
+/** SQLite 当前目标 schema 版本（与 migrations 最新 version 对齐） */
+export const SCHEMA_VERSION = 2;
+
 /** 默认数据根目录名（位于用户 home 下） */
 export const DATA_DIR_NAME = '.seedcast';
 

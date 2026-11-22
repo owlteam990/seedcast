@@ -1,0 +1,47 @@
+{
+  "loggedIn": "button.AppHeader-profileEntry | .AppHeader-profileEntry | .AppHeader-userInfo | a.AppHeader-profileEntry | [class*='AppHeader-profile'] img.Avatar | button[aria-label*='个人'] | a[href*='/people/'] img.Avatar",
+
+  "globalCreateBtn": "button.Button--primary.Button--blue:has(svg) | button.Button--blue:has(svg) | button[aria-label*='创作']",
+  "menuPin": "text=发想法",
+  "menuQuestion": "text=提问题",
+  "menuArticle": "text=写文章",
+  "menuVideo": "text=发视频",
+
+  "articleTitle": "textarea[placeholder*='标题'] | .WriteIndex-titleInput textarea | textarea.Input",
+  "articleContent": ".public-DraftEditor-content | .DraftEditor-editorContainer [contenteditable='true'] | div[contenteditable='true'][role='textbox']",
+  "articleSubmit": "button.Button--primary.Button--blue:has-text('发布') | button.Button--primary:has-text('发布')",
+
+  "articlePublishPanel": "text=添加文章封面 | text=发布设置 | text=添加封面",
+  "articleCoverAdd": "text=添加文章封面 | text=添加封面",
+  "articleCoverFile": "input[type='file'][accept*='image'] | input[type='file'][accept*='jpeg'] | input[type='file'][accept*='png']",
+  "articleCoverFromContent": "text=从正文选择 | text=从文章中选择 | text=文章配图",
+  "articleCoverThumb": "[class*='ImagePicker'] img | [role='dialog'] img | .Modal-content img",
+  "articleCoverConfirm": "[role='dialog'] button:has-text('确定') | [role='dialog'] button:has-text('完成') | .Modal-content button.Button--primary",
+  "articleTopicAdd": "text=添加话题 | button:has-text('添加话题')",
+  "articleTopicInput": "input[placeholder*='话题'] | input[placeholder*='搜索话题'] | .Popover input[type='text']",
+  "articleTopicSuggestion": ".Popover-content button >> nth=0 | [role='listbox'] [role='option'] >> nth=0 | .Menu-item >> nth=0",
+  "articleSourceAdd": "text=添加来源 | button:has-text('添加来源')",
+  "articleSourceInput": "input[placeholder*='来源'] | input[placeholder*='链接'] | textarea[placeholder*='来源']",
+  "articlePublishConfirm": "button:has-text('确认发布') | button:has-text('发布文章') | button.Button--primary.Button--blue:has-text('发布')",
+
+  "articleImportBtn": "button:has-text('导入')",
+  "articleImportMenuDoc": "text=导入文档",
+  "articleImportMenuLink": "text=导入链接",
+  "articleImportTabDoc": "text=导入文档",
+  "articleImportTabLink": "text=导入链接",
+  "articleImportUrlInput": "textarea[placeholder*='公众号'] | textarea[placeholder*='网页链接'] | textarea[placeholder*='链接'] | [role='dialog'] textarea",
+  "articleImportFileInput": "[role='dialog'] input[type='file'] | .Modal-content input[type='file'] | input[type='file']",
+  "articleImportStart": "button:has-text('开始导入') | [role='dialog'] button.Button--primary:has-text('导入')",
+
+  "questionTitle": "textarea[placeholder*='问题'] | input[placeholder*='问题'] | textarea.Input",
+  "questionDetail": "div[contenteditable='true'] | .public-DraftEditor-content",
+  "questionSubmit": "button:has-text('发布问题') | button:has-text('提交问题') | button:has-text('发布')",
+
+  "pinEditor": ".Popover-content div[contenteditable='true'] | div[contenteditable='true'][role='textbox'] | .public-DraftEditor-content",
+  "pinSubmit": "button:has-text('发布想法') | button:has-text('发布')",
+
+  "videoUpload": "input[type='file'] | .Upload-input | [class*='upload']",
+  "videoTitle": "input[placeholder*='标题'] | textarea[placeholder*='标题']",
+  "videoDesc": "div[contenteditable='true'] | textarea[placeholder*='简介'] | textarea[placeholder*='描述']",
+  "videoSubmit": "button:has-text('发布') | button:has-text('提交')"
+}

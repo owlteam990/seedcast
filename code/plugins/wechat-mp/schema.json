@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "微信公众号发布设置",
+  "properties": {
+    "author": {
+      "type": "string",
+      "title": "作者",
+      "description": "最多约 6 个汉字（20 字节）"
+    },
+    "digest": {
+      "type": "string",
+      "title": "摘要",
+      "description": "最多 120 字节；缺省用标题"
+    },
+    "coverFile": {
+      "type": "string",
+      "title": "封面图路径",
+      "description": "本地 JPEG/PNG；缺省用插件 fixtures/cover.png"
+    },
+    "contentSourceUrl": {
+      "type": "string",
+      "title": "原文链接",
+      "description": "可选 content_source_url"
+    },
+    "showCoverPic": {
+      "type": "integer",
+      "title": "正文显示封面",
+      "enum": [0, 1],
+      "default": 1
+    }
+  }
+}

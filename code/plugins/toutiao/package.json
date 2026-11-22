@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-toutiao",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "今日头条号图文草稿（Cookie + Web API）"
+}

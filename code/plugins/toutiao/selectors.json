@@ -1,0 +1,3 @@
+{
+  "loggedIn": ".user-info | .avatar | a[href*='profile'] | .mp-header-user"
+}

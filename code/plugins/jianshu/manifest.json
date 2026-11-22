@@ -1,0 +1,26 @@
+{
+  "id": "jianshu",
+  "name": "简书号",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "adapter": "code",
+  "entry": "builtin",
+  "contentTypes": ["article"],
+  "platform": {
+    "home": "https://www.jianshu.com",
+    "loginUrl": "https://www.jianshu.com/sign_in",
+    "sessionCheck": {
+      "url": "https://www.jianshu.com",
+      "loggedInSelector": "loggedIn",
+      "loggedInCookie": "remember_user_token",
+      "timeoutMs": 15000
+    }
+  },
+  "capabilities": {
+    "draft": true,
+    "nativeSchedule": false,
+    "publishTypes": [
+      { "id": "draft", "label": "写入草稿" }
+    ]
+  }
+}

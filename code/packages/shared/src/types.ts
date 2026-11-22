@@ -38,11 +38,18 @@ export type AccountStatus = 'unknown' | 'logged_in' | 'expired';
 export interface Content {
   /** 内容 ID */
   id: string;
+  /**
+   * 内容类型
+   * @see ContentType
+   */
+  contentType: ContentType;
   /** 标题 */
   title: string;
-  /** Markdown 正文 */
+  /** Markdown 正文（图文则为描述） */
   markdown: string;
-  /** 本地素材相对路径列表 */
+  /**
+   * 素材列表：本地绝对路径、assets 文件名或公网图床 URL
+   */
   assets: string[];
   /** 创建时间 ISO */
   createdAt: string;
@@ -162,6 +169,11 @@ export interface PluginManifest {
     sessionCheck?: {
       url: string;
       loggedInSelector: string;
+      /**
+       * 可选：登录态 Cookie 名（如知乎 z_c0）；存在且非空则视为已登录。
+       * 多个备选可用逗号分隔（如 CSDN: UserName,UserToken）。
+       */
+      loggedInCookie?: string;
       timeoutMs?: number;
     };
   };
@@ -169,6 +181,14 @@ export interface PluginManifest {
   capabilities?: {
     draft?: boolean;
     nativeSchedule?: boolean;
+    /**
+     * 平台可选发布类型（如知乎：提问题/发想法/写文章/发视频）
+     */
+    publishTypes?: Array<{ id: string; label: string }>;
+    /**
+     * 写文章时的正文导入方式（对应知乎编辑器「导入」）
+     */
+    articleImportModes?: Array<{ id: string; label: string }>;
   };
   /** 代码插件入口（adapter=code 时） */
   entry?: string;

@@ -1,0 +1,33 @@
+{
+  "id": "zhihu",
+  "name": "知乎",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "adapter": "flow",
+  "contentTypes": ["article", "imageText", "video"],
+  "platform": {
+    "home": "https://www.zhihu.com",
+    "loginUrl": "https://www.zhihu.com/signin",
+    "sessionCheck": {
+      "url": "https://www.zhihu.com",
+      "loggedInSelector": "loggedIn",
+      "loggedInCookie": "z_c0",
+      "timeoutMs": 15000
+    }
+  },
+  "capabilities": {
+    "draft": true,
+    "nativeSchedule": false,
+    "publishTypes": [
+      { "id": "question", "label": "提问题" },
+      { "id": "pin", "label": "发想法" },
+      { "id": "article", "label": "写文章" },
+      { "id": "video", "label": "发视频" }
+    ],
+    "articleImportModes": [
+      { "id": "editor", "label": "编辑器填写" },
+      { "id": "wechatLink", "label": "导入公众号链接" },
+      { "id": "document", "label": "导入文档 MD/Doc" }
+    ]
+  }
+}

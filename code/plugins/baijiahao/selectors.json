@@ -1,0 +1,3 @@
+{
+  "loggedIn": ".user-name | .avatar-img | a[href*='builder/rc'] | .header-user"
+}

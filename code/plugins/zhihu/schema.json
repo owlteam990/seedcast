@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "知乎发布设置",
+  "properties": {
+    "publishType": {
+      "type": "string",
+      "title": "发布类型",
+      "description": "对应知乎创作入口：提问题 / 发想法 / 写文章 / 发视频",
+      "enum": ["question", "pin", "article", "video"],
+      "enumLabels": {
+        "question": "提问题",
+        "pin": "发想法",
+        "article": "写文章",
+        "video": "发视频"
+      },
+      "default": "article"
+    },
+    "articleImport": {
+      "type": "string",
+      "title": "文章正文来源",
+      "description": "仅写文章：编辑器填写 / 导入公众号链接 / 导入 MD·Doc 文档",
+      "enum": ["editor", "wechatLink", "document"],
+      "enumLabels": {
+        "editor": "编辑器填写",
+        "wechatLink": "导入公众号链接",
+        "document": "导入文档 MD/Doc"
+      },
+      "default": "editor",
+      "x-showWhen": { "publishType": "article" }
+    },
+    "importUrl": {
+      "type": "string",
+      "title": "公众号文章链接",
+      "description": "articleImport=wechatLink 时必填",
+      "x-showWhen": { "articleImport": "wechatLink" }
+    },
+    "importFile": {
+      "type": "string",
+      "title": "本地文档路径",
+      "description": "articleImport=document 时可选；缺省则用正文 Markdown 生成临时 .md",
+      "x-showWhen": { "articleImport": "document" }
+    },
+    "topics": {
+      "type": "string",
+      "title": "文章话题",
+      "description": "逗号分隔；发布设置里会添加第一个话题",
+      "x-showWhen": { "publishType": "article" }
+    },
+    "coverFile": {
+      "type": "string",
+      "title": "封面图路径",
+      "description": "本地 JPEG/PNG；缺省时尝试从正文配图选择",
+      "x-showWhen": { "publishType": "article" }
+    }
+  },
+  "required": ["publishType"]
+}

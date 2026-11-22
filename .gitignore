@@ -47,11 +47,17 @@ blob-report/
 tmp/
 temp/
 .tmp/
+.tmp-smoke/
+**/.tmp-smoke/
 scripts/local/
 **/*.local.sh
 **/*.local.ts
 **/*.local.js
 **/*-smoke.local.*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
 
 # --- OS / IDE ---
 .DS_Store

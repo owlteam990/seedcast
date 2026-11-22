@@ -1,0 +1,26 @@
+{
+  "id": "csdn",
+  "name": "CSDN",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "adapter": "code",
+  "entry": "builtin",
+  "contentTypes": ["article"],
+  "platform": {
+    "home": "https://www.csdn.net",
+    "loginUrl": "https://passport.csdn.net/login",
+    "sessionCheck": {
+      "url": "https://www.csdn.net",
+      "loggedInSelector": "loggedIn",
+      "loggedInCookie": "UserName,UserToken,UserInfo,c_token",
+      "timeoutMs": 15000
+    }
+  },
+  "capabilities": {
+    "draft": true,
+    "nativeSchedule": false,
+    "publishTypes": [
+      { "id": "draft", "label": "写入草稿箱" }
+    ]
+  }
+}

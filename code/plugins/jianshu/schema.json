@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "简书号发布设置",
+  "properties": {
+    "notebookId": {
+      "type": ["integer", "string"],
+      "title": "文集 ID",
+      "description": "可选；缺省用第一个文集"
+    }
+  }
+}

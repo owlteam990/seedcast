@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
+  "title": "Mock 发布设置",
   "properties": {
-    "fixtureUrl": {
+    "note": {
       "type": "string",
-      "title": "本地 fixture URL",
-      "default": ""
+      "title": "备注（可选）",
+      "description": "仅写入回执调试，不影响 fixture"
     }
-  },
-  "required": []
+  }
 }

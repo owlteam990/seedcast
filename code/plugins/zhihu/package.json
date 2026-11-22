@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-zhihu",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "知乎专栏声明式插件（选择器待实测）"
+}
