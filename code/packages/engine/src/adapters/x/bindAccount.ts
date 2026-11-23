@@ -1,26 +1,24 @@
 /**
- * 绑定 X OAuth 1.0a 凭证
+ * 绑定 X 凭证 — 委托 @seedcast/publish-core（兼容引擎签名）
  *
  * @author Seedcast
- * @date 2026-11-22
+ * @date 2026-11-23
  */
 
-import { randomUUID } from 'node:crypto';
 import type { Account, PluginRecord } from '@seedcast/shared';
-import type { SeedcastDatabase } from '../../db/database.js';
-import { createAccount, updateAccountStatus } from '../../db/accounts.js';
-import { resolveProfileDir } from '../../session/pool.js';
-import { getXUserMe } from './client.js';
-import { readXCredentials, writeXCredentials } from './credentials.js';
+import {
+  bindXAccount as bindCore,
+  checkXSession as checkCore,
+} from '@seedcast/publish-core';
 
 /**
  * 创建 X 账号并校验凭证
  *
- * @param input 参数
+ * @param input 参数（db 保留兼容）
  * @returns 账号
  */
 export async function bindXAccount(input: {
-  db: SeedcastDatabase;
+  db: unknown;
   dataDir: string;
   plugin: PluginRecord;
   name: string;
@@ -32,57 +30,25 @@ export async function bindXAccount(input: {
   if (input.plugin.manifest.id !== 'x') {
     throw new Error('仅 x 插件支持该凭证绑定');
   }
-  const apiKey = input.apiKey.trim();
-  const apiSecret = input.apiSecret.trim();
-  const accessToken = input.accessToken.trim();
-  const accessTokenSecret = input.accessTokenSecret.trim();
-  if (!apiKey || !apiSecret || !accessToken || !accessTokenSecret) {
-    throw new Error('请填写完整的 API Key / Secret 与 Access Token / Secret');
-  }
-
-  const accountId = randomUUID();
-  const profileDir = resolveProfileDir(
-    input.dataDir,
-    input.plugin.manifest.id,
-    accountId,
-  );
-  writeXCredentials(profileDir, {
-    apiKey,
-    apiSecret,
-    accessToken,
-    accessTokenSecret,
+  const { account, loggedIn } = await bindCore({
+    name: input.name,
+    apiKey: input.apiKey,
+    apiSecret: input.apiSecret,
+    accessToken: input.accessToken,
+    accessTokenSecret: input.accessTokenSecret,
+    dataDir: input.dataDir,
   });
-
-  let displayName = input.name.trim();
-  const account = createAccount(input.db, {
-    id: accountId,
-    pluginId: input.plugin.manifest.id,
-    name: displayName || 'X',
-    profileDir,
-  });
-
-  try {
-    const me = await getXUserMe({
-      apiKey,
-      apiSecret,
-      accessToken,
-      accessTokenSecret,
-    });
-    if (!displayName) {
-      displayName = `@${me.username}`;
-      account.name = displayName;
-      // 名称仅展示；DB 已写入初始 name，检测态优先
-    }
-    updateAccountStatus(input.db, account.id, 'logged_in');
-    account.status = 'logged_in';
-    account.lastCheckAt = new Date().toISOString();
-    account.name = displayName || `@${me.username}`;
-    return { account, loggedIn: true };
-  } catch (err) {
-    updateAccountStatus(input.db, account.id, 'expired');
-    account.status = 'expired';
-    throw err;
-  }
+  return {
+    account: {
+      id: account.id,
+      pluginId: account.pluginId,
+      name: account.name,
+      profileDir: account.profileDir,
+      lastCheckAt: account.lastCheckAt,
+      status: account.status,
+    },
+    loggedIn,
+  };
 }
 
 /**
@@ -94,14 +60,5 @@ export async function bindXAccount(input: {
 export async function checkXSession(account: {
   profileDir: string;
 }): Promise<boolean> {
-  const credentials = readXCredentials(account.profileDir);
-  if (!credentials) {
-    return false;
-  }
-  try {
-    await getXUserMe(credentials);
-    return true;
-  } catch {
-    return false;
-  }
+  return checkCore(account);
 }

@@ -48,6 +48,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.6.7)
+      '@seedcast/publish-core':
+        specifier: workspace:*
+        version: link:../publish-core
       '@seedcast/shared':
         specifier: workspace:*
         version: link:../shared
@@ -84,6 +87,28 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/publish-core:
+    dependencies:
+      '@seedcast/shared':
+        specifier: workspace:*
+        version: link:../shared
+      better-sqlite3:
+        specifier: ^13.2.0
+        version: 13.2.0
+      playwright:
+        specifier: ^1.65.1
+        version: 1.65.1
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^9.6.0
+        version: 9.6.0
+      '@types/node':
+        specifier: ^22.19.1
+        version: 22.20.5
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/shared:
     devDependencies:
       typescript:
@@ -92,7 +117,11 @@ importers:
 
   plugins/baijiahao: {}
 
+  plugins/bilibili: {}
+
   plugins/csdn: {}
+
+  plugins/douyin: {}
 
   plugins/jianshu: {}
 
@@ -101,6 +130,14 @@ importers:
   plugins/toutiao: {}
 
   plugins/wechat-mp: {}
+
+  plugins/weibo: {}
+
+  plugins/x: {}
+
+  plugins/xiaohongshu: {}
+
+  plugins/youtube: {}
 
   plugins/zhihu: {}
 

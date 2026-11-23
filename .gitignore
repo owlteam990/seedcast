@@ -87,3 +87,6 @@ src-tauri/gen/
 
 # --- Cursor / agent local ---
 .cursor/hooks/state/
+
+# --- skill 独立仓库，勿并入本仓 ---
+skill/

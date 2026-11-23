@@ -118,7 +118,7 @@ async function main(): Promise<void> {
           .string()
           .optional()
           .describe(
-            '插件 ID，如 zhihu / wechat-mp / csdn / weibo / bilibili / douyin / x / youtube',
+            '插件 ID，如 zhihu / wechat-mp / csdn / weibo / bilibili / douyin / xiaohongshu / x / youtube',
           ),
       },
     },

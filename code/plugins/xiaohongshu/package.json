@@ -1,0 +1,7 @@
+{
+  "name": "@seedcast/plugin-xiaohongshu",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "小红书创作者中心图文草稿（Cookie 会话 + 页面自动化）"
+}

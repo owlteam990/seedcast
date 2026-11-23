@@ -123,19 +123,20 @@ export function ImageTextComposer(props: {
       return;
     }
     const ready = images.filter((x) => {
-      return x.remoteUrl && !x.uploading;
+      return x.localPath && !x.uploading;
     });
     if (ready.length === 0) {
-      onError?.('请至少上传一张图片（将走第三方图床）');
+      onError?.('请至少上传一张图片');
       return;
     }
     setSaving(true);
     try {
+      // 入库本地路径：小红书等平台发布依赖本地文件；图床 URL 可写在描述中
       const res = await client.createContent({
         title: t,
         markdown: description,
         assets: ready.map((x) => {
-          return x.remoteUrl;
+          return x.localPath;
         }),
         contentType: 'imageText',
       });
@@ -204,7 +205,7 @@ export function ImageTextComposer(props: {
         <div className="itc-step-label">
           <span className="itc-num">3</span>
           图片
-          <span className="muted itc-hint">上传后自动走设置中的免费图床</span>
+          <span className="muted itc-hint">本地入库（可同步图床）；小红书等需本地路径</span>
         </div>
         <div
           className={

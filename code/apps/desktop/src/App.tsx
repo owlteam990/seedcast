@@ -9,6 +9,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -62,6 +63,38 @@ function resolveMediaSrc(client: EngineClient, ref: string): string {
     ? ref.replace(/^.*[/\\]/, '')
     : ref;
   return client.assetUrl(name);
+}
+
+/**
+ * 是否可作为小红书发布的本地图片素材
+ *
+ * @param asset 素材引用
+ * @returns 本地图片则 true
+ */
+function isLocalImageAsset(asset: string): boolean {
+  if (!asset || /^https?:\/\//i.test(asset)) {
+    return false;
+  }
+  return /\.(png|jpe?g|webp|gif)$/i.test(asset);
+}
+
+/**
+ * File → data URL
+ *
+ * @param file 文件
+ * @returns data URL
+ */
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(String(reader.result ?? ''));
+    };
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('读取文件失败'));
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 /**
@@ -212,6 +245,8 @@ export function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [resultLinks, setResultLinks] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
+  const [xhsUploading, setXhsUploading] = useState(false);
+  const xhsFileRef = useRef<HTMLInputElement | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
   const [binding, setBinding] = useState(false);
   const [loginAbort, setLoginAbort] = useState<AbortController | null>(null);
@@ -490,6 +525,23 @@ export function App() {
   }, [client, page, refreshTemplates]);
 
   /**
+   * 小红书：按内容类型推断发布形式（文章→长文，图文→图文笔记）
+   *
+   * @param base schema 默认 settings
+   * @param type 内容类型
+   * @returns 合并后的 settings
+   */
+  const withXhsPublishTypeHint = (
+    base: Record<string, unknown>,
+    type: ContentType,
+  ): Record<string, unknown> => {
+    return {
+      ...base,
+      publishType: type === 'article' ? 'article' : 'imageText',
+    };
+  };
+
+  /**
    * 切换目标插件时重置 schema 默认值，并尽量保留同名账号
    *
    * @param nextId 插件 ID
@@ -499,7 +551,11 @@ export function App() {
     const next = plugins.find((p) => {
       return p.id === nextId;
     });
-    setSettings(defaultsFromSchema(next?.schema));
+    let nextSettings = defaultsFromSchema(next?.schema);
+    if (nextId === 'xiaohongshu') {
+      nextSettings = withXhsPublishTypeHint(nextSettings, contentType);
+    }
+    setSettings(nextSettings);
     const match = accounts.find((a) => {
       return a.pluginId === nextId;
     });
@@ -518,13 +574,19 @@ export function App() {
     if (!item) {
       return;
     }
+    const nextType = item.contentType ?? 'article';
     setContentId(item.id);
-    setContentType(item.contentType ?? 'article');
+    setContentType(nextType);
     setTitle(item.title);
     setMarkdown(item.markdown);
     setContentAssets(item.assets ?? []);
     setShowImageTextComposer(false);
     setShowVideoComposer(false);
+    if (pluginId === 'xiaohongshu') {
+      setSettings((prev) => {
+        return withXhsPublishTypeHint(prev, nextType);
+      });
+    }
   };
 
   /**
@@ -897,6 +959,50 @@ export function App() {
   };
 
   /**
+   * 小红书：本地上传笔记图片（最多 9 张）
+   *
+   * @param files 选中文件
+   */
+  const onUploadXhsImages = async (
+    files: FileList | File[],
+  ): Promise<void> => {
+    if (!client) {
+      setError('请先连接引擎');
+      return;
+    }
+    const list = Array.from(files).filter((f) => {
+      return f.type.startsWith('image/');
+    });
+    if (list.length === 0) {
+      return;
+    }
+    setXhsUploading(true);
+    setError(null);
+    try {
+      const room = Math.max(
+        0,
+        9 - contentAssets.filter(isLocalImageAsset).length,
+      );
+      for (const file of list.slice(0, room)) {
+        const dataUrl = await readFileAsDataUrl(file);
+        const saved = await client.uploadAsset({
+          mime: file.type || 'image/png',
+          dataBase64: dataUrl,
+          filename: file.name || 'xhs.png',
+        });
+        const ref = saved.filename || saved.path;
+        setContentAssets((prev) => {
+          return prev.includes(ref) ? prev : [...prev, ref];
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setXhsUploading(false);
+    }
+  };
+
+  /**
    * 发布中心：保存内容（如需）后发布当前目标
    */
   const onPublish = async (): Promise<void> => {
@@ -921,6 +1027,23 @@ export function App() {
       if (!/^https?:\/\//i.test(u.trim())) {
         setError('导入公众号链接需填写有效的 http(s) 网址');
         return;
+      }
+    }
+    // 小红书图文：发布前强制至少 1 张本地图片；写长文不强制
+    if (pluginId === 'xiaohongshu') {
+      const xhsMode =
+        settings.publishType === 'article' ||
+        (settings.publishType !== 'imageText' && contentType === 'article')
+          ? 'article'
+          : 'imageText';
+      if (xhsMode === 'imageText') {
+        const localImages = contentAssets.filter(isLocalImageAsset);
+        if (localImages.length === 0) {
+          setError(
+            '小红书「上传图文」请至少上传 1 张本地图片；长文请改选「写长文」',
+          );
+          return;
+        }
       }
     }
 
@@ -1422,21 +1545,24 @@ export function App() {
                           setMarkdown(e.target.value);
                         }}
                       />
-                      <span className="muted">图片（图床 URL）</span>
+                      <span className="muted">图片（本地入库，可供小红书等使用）</span>
                       <div className="itc-thumbs itc-thumbs-readonly">
                         {contentAssets.length === 0 ? (
                           <p className="muted">无图片</p>
                         ) : (
-                          contentAssets.map((url) => {
+                          contentAssets.map((ref) => {
+                            const src = client
+                              ? resolveMediaSrc(client, ref)
+                              : ref;
                             return (
                               <a
-                                key={url}
+                                key={ref}
                                 className="itc-thumb"
-                                href={url}
+                                href={src}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
-                                <img src={url} alt="" />
+                                <img src={src} alt="" />
                               </a>
                             );
                           })
@@ -2132,6 +2258,84 @@ export function App() {
                   </li>
                 </ul>
               </div>
+            ) : null}
+            {pluginId === 'xiaohongshu' &&
+            settings.publishType !== 'article' ? (
+              <div className="field">
+                <span>
+                  笔记图片（图文必填，最多 9 张）
+                  <span className="muted" style={{ marginLeft: 8 }}>
+                    长文请在上方改选「写长文」
+                  </span>
+                </span>
+                <div className="itc-thumbs">
+                  {contentAssets.filter(isLocalImageAsset).map((ref) => {
+                    return (
+                      <div key={ref} className="itc-thumb">
+                        <img
+                          src={
+                            client ? resolveMediaSrc(client, ref) : ref
+                          }
+                          alt=""
+                        />
+                        <button
+                          type="button"
+                          className="itc-thumb-remove"
+                          title="移除"
+                          onClick={() => {
+                            setContentAssets((prev) => {
+                              return prev.filter((x) => {
+                                return x !== ref;
+                              });
+                            });
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    className="itc-add"
+                    disabled={
+                      !client ||
+                      xhsUploading ||
+                      contentAssets.filter(isLocalImageAsset).length >= 9
+                    }
+                    onClick={() => {
+                      xhsFileRef.current?.click();
+                    }}
+                  >
+                    <span className="itc-add-icon">＋</span>
+                    <span>{xhsUploading ? '上传中…' : '添加图片'}</span>
+                  </button>
+                </div>
+                <input
+                  ref={xhsFileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                  multiple
+                  hidden
+                  onChange={(e) => {
+                    if (e.target.files?.length) {
+                      void onUploadXhsImages(e.target.files);
+                    }
+                    e.target.value = '';
+                  }}
+                />
+                {contentAssets.filter(isLocalImageAsset).length === 0 ? (
+                  <p className="muted" role="status">
+                    图文未上传图片时无法发布；长内容请选「写长文」
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {pluginId === 'xiaohongshu' &&
+            settings.publishType === 'article' ? (
+              <p className="muted" role="note">
+                将走创作者中心「写长文 → 新的创作」，标题最长 64 字，不强制配图
+              </p>
             ) : null}
             <label className="field">
               套用发布配置模板

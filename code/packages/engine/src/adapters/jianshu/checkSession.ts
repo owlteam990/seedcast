@@ -1,33 +1,19 @@
 /**
- * 简书登录态检测（Web API）
+ * 简书登录态 — 委托 @seedcast/publish-core
  *
  * @author Seedcast
- * @date 2026-11-22
+ * @date 2026-11-23
  */
 
 import type { Account } from '@seedcast/shared';
-import { withProfileCookieSession } from '../cookieHttp.js';
-import { getJianshuBasicSettings, JIANSHU_ORIGIN } from './client.js';
+import { checkJianshuSession as checkCore } from '@seedcast/publish-core';
 
 /**
  * 检测简书账号 Cookie 是否仍有效
  *
  * @param account 账号
  * @returns 是否已登录
- * @author Seedcast
- * @date 2026-11-22
  */
 export async function checkJianshuSession(account: Account): Promise<boolean> {
-  try {
-    const info = await withProfileCookieSession({
-      profileDir: account.profileDir,
-      cookieUrl: JIANSHU_ORIGIN,
-      run: async ({ fetch: fetchFn }) => {
-        return getJianshuBasicSettings(fetchFn);
-      },
-    });
-    return Boolean(info?.nickname);
-  } catch {
-    return false;
-  }
+  return checkCore(account);
 }

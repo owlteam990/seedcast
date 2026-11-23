@@ -246,8 +246,16 @@ export async function withProfileCookieSession<T>(input: {
       const buf = await apiRes.body();
       const resHeaders = new Headers();
       const rawHeaders = apiRes.headers();
+      // set-cookie 可能含换行/多值，Fetch Headers 拒收
       for (const [k, v] of Object.entries(rawHeaders)) {
-        resHeaders.set(k, v);
+        if (k.toLowerCase() === 'set-cookie') {
+          continue;
+        }
+        try {
+          resHeaders.set(k, String(v).replace(/[\r\n]+/g, ' '));
+        } catch {
+          // 跳过非法头
+        }
       }
       // 记录最终 URL，便于调用方识别重定向到登录页
       resHeaders.set('x-seedcast-final-url', apiRes.url());

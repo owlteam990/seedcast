@@ -244,14 +244,10 @@ function parseLoggedInCookieNames(raw?: string): string[] {
 function looksLikeLoginPage(page: Page, loginUrl: string): boolean {
   const current = page.url();
   try {
-    const loginHost = new URL(loginUrl).hostname;
-    const loginPath = new URL(loginUrl).pathname;
+    const login = new URL(loginUrl);
     const cur = new URL(current);
     // passport.* 整站视为登录域（CSDN 登录完成前常停在此）
-    if (
-      cur.hostname === loginHost ||
-      /(^|\.)passport\./i.test(cur.hostname)
-    ) {
+    if (/(^|\.)passport\./i.test(cur.hostname)) {
       return true;
     }
     if (
@@ -261,7 +257,14 @@ function looksLikeLoginPage(page: Page, loginUrl: string): boolean {
     ) {
       return true;
     }
-    if (loginPath && cur.pathname.startsWith(loginPath)) {
+    // 仅当 loginUrl 指向具体路径时，才用「同 host + 路径前缀」
+    // 避免 loginPath="/" 或「整站 hostname」把已登录页误判成登录页
+    const loginPath = login.pathname.replace(/\/+$/, '') || '/';
+    if (
+      loginPath !== '/' &&
+      cur.hostname === login.hostname &&
+      cur.pathname.startsWith(loginPath)
+    ) {
       return true;
     }
   } catch {

@@ -1,8 +1,8 @@
 /**
- * YouTube：视频 → 私密上传（官方 API）
+ * YouTube 上传 — 委托 @seedcast/publish-core
  *
  * @author Seedcast
- * @date 2026-11-22
+ * @date 2026-11-23
  */
 
 import { existsSync } from 'node:fs';
@@ -16,21 +16,15 @@ import type {
   Receipt,
 } from '@seedcast/shared';
 import { SeedcastErrorCode } from '@seedcast/shared';
-import {
-  getYouTubeAccessToken,
-  getYouTubeMyChannel,
-  uploadYouTubeVideo,
-  youtubeVideoUrl,
-} from './client.js';
-import { readYouTubeCredentials } from './credentials.js';
+import { publishYouTubeDraft as publishCore } from '@seedcast/publish-core';
 
 /**
- * 解析本地视频路径
+ * 解析内容中的本地视频
  *
  * @param content 内容
- * @returns 绝对路径
+ * @returns 路径
  */
-function resolveVideoPath(content: Content): string {
+function firstVideoAsset(content: Content): string {
   const dataAssets = join(homedir(), '.seedcast', 'assets');
   for (const asset of content.assets ?? []) {
     if (!/\.(mp4|mov|webm|mkv|avi)$/i.test(asset)) {
@@ -66,38 +60,11 @@ export async function publishYouTubeDraft(input: {
   const { content, target, account, taskId, onInfo } = input;
   const at = new Date().toISOString();
   const settings = target.settings ?? {};
-  const log = (msg: string): void => {
-    onInfo?.(msg);
-  };
 
   try {
     if (content.contentType !== 'video') {
       throw new Error('YouTube 插件仅支持视频内容类型');
     }
-    const credentials = readYouTubeCredentials(account.profileDir);
-    if (!credentials) {
-      return {
-        taskId,
-        target,
-        ok: false,
-        error: {
-          code: SeedcastErrorCode.VALIDATION,
-          message:
-            'YouTube 账号未绑定 OAuth 凭证，请到账号页填写 Client ID / Secret / Refresh Token',
-        },
-        at,
-      };
-    }
-
-    log('刷新 YouTube access token');
-    const token = await getYouTubeAccessToken(
-      account.profileDir,
-      credentials,
-      false,
-    );
-    const channel = await getYouTubeMyChannel(token);
-    log(`已授权频道：${channel.title}`);
-
     const privacyRaw =
       typeof settings.privacyStatus === 'string'
         ? settings.privacyStatus.trim()
@@ -106,25 +73,36 @@ export async function publishYouTubeDraft(input: {
       privacyRaw === 'public' || privacyRaw === 'unlisted'
         ? privacyRaw
         : 'private';
-    const categoryId =
-      settings.categoryId != null ? String(settings.categoryId) : undefined;
 
-    const filePath = resolveVideoPath(content);
-    const { videoId } = await uploadYouTubeVideo({
-      accessToken: token,
-      filePath,
+    const result = await publishCore({
+      profileDir: account.profileDir,
       title: content.title,
       description: content.markdown ?? '',
+      videoFile: firstVideoAsset(content),
       privacyStatus,
-      categoryId,
-      onInfo: log,
+      categoryId:
+        settings.categoryId != null ? String(settings.categoryId) : undefined,
+      onInfo,
     });
+
+    if (!result.ok) {
+      return {
+        taskId,
+        target,
+        ok: false,
+        error: {
+          code: SeedcastErrorCode.PLATFORM_REJECTED,
+          message: result.error?.message ?? 'YouTube 发布失败',
+        },
+        at,
+      };
+    }
 
     return {
       taskId,
       target,
       ok: true,
-      url: youtubeVideoUrl(videoId),
+      url: result.url,
       at,
     };
   } catch (err) {

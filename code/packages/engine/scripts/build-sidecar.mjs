@@ -86,6 +86,7 @@ function syncOfficialPlugins() {
     'weibo',
     'bilibili',
     'douyin',
+    'xiaohongshu',
     'x',
     'youtube',
   ];

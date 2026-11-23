@@ -24,6 +24,11 @@ import { publishToutiaoDraft } from '../adapters/toutiao/publish.js';
 import { publishWechatMpDraft } from '../adapters/wechatMp/publish.js';
 import { publishWeiboDraft } from '../adapters/weibo/publish.js';
 import { publishXPost } from '../adapters/x/publish.js';
+import {
+  resolveXhsPublishMode,
+  validateXhsImages,
+} from '../adapters/xiaohongshu/images.js';
+import { publishXhsDraft } from '../adapters/xiaohongshu/publish.js';
 import { publishYouTubeDraft } from '../adapters/youtube/publish.js';
 import { getAccount } from '../db/accounts.js';
 import type { SeedcastDatabase } from '../db/database.js';
@@ -88,6 +93,10 @@ const CODE_PUBLISHERS: Record<
   douyin: {
     label: '写入抖音创作者中心草稿（页面自动化）',
     publish: publishDouyinDraft,
+  },
+  xiaohongshu: {
+    label: '写入小红书草稿（图文 / 长文 · 页面自动化）',
+    publish: publishXhsDraft,
   },
   x: {
     label: '发布到 X（官方 API）',
@@ -301,6 +310,80 @@ export async function runPublishJob(
             },
             at: new Date().toISOString(),
           };
+        } else if (codePluginId === 'xiaohongshu') {
+          // 小红书：图文强制配图；长文跳过
+          const xhsMode = resolveXhsPublishMode(
+            content,
+            target.settings ?? {},
+          );
+          const imageErr = validateXhsImages(content, xhsMode);
+          if (imageErr) {
+            receipt = {
+              taskId: task.id,
+              target,
+              ok: false,
+              error: {
+                code: SeedcastErrorCode.VALIDATION,
+                message: imageErr,
+              },
+              at: new Date().toISOString(),
+            };
+          } else {
+            emit({
+              type: 'info',
+              taskId: task.id,
+              targetIndex: i,
+              message: `检测登录态 → ${account.name}`,
+            });
+            let loggedIn = account.status === 'logged_in';
+            try {
+              loggedIn = await checkAccountSession({ db, account, plugin });
+            } catch (err) {
+              emit({
+                type: 'info',
+                taskId: task.id,
+                targetIndex: i,
+                message: `会话检测异常: ${
+                  err instanceof Error ? err.message : String(err)
+                }`,
+              });
+              loggedIn = false;
+            }
+            if (!loggedIn) {
+              receipt = {
+                taskId: task.id,
+                target,
+                ok: false,
+                error: {
+                  code: SeedcastErrorCode.SESSION_EXPIRED,
+                  message: `账号「${account.name}」登录态失效，请到账号页重新登录`,
+                },
+                at: new Date().toISOString(),
+              };
+            } else {
+              emit({
+                type: 'info',
+                taskId: task.id,
+                targetIndex: i,
+                message: publisher.label,
+              });
+              receipt = await publisher.publish({
+                plugin,
+                content,
+                target,
+                account,
+                taskId: task.id,
+                onInfo: (message: string) => {
+                  emit({
+                    type: 'info',
+                    taskId: task.id,
+                    targetIndex: i,
+                    message,
+                  });
+                },
+              });
+            }
+          }
         } else {
           emit({
             type: 'info',

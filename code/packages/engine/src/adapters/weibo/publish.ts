@@ -1,8 +1,8 @@
 /**
- * 微博：Markdown → 头条文章草稿（Web API）
+ * 微博草稿发布 — 委托 @seedcast/publish-core
  *
  * @author Seedcast
- * @date 2026-11-22
+ * @date 2026-11-23
  */
 
 import type {
@@ -13,23 +13,13 @@ import type {
   Receipt,
 } from '@seedcast/shared';
 import { SeedcastErrorCode } from '@seedcast/shared';
-import { withProfileCookieSession } from '../cookieHttp.js';
-import { markdownToSimpleHtml } from '../simpleMarkdownHtml.js';
-import {
-  createWeiboArticleDraft,
-  getWeiboUserConfig,
-  saveWeiboArticleDraft,
-  WEIBO_ARTICLE_EDITOR,
-  weiboDraftUrl,
-} from './client.js';
+import { publishWeiboDraft as publishCore } from '@seedcast/publish-core';
 
 /**
  * 发布到微博头条文章草稿
  *
  * @param input 发布输入
  * @returns 回执
- * @author Seedcast
- * @date 2026-11-22
  */
 export async function publishWeiboDraft(input: {
   plugin: PluginRecord;
@@ -41,61 +31,32 @@ export async function publishWeiboDraft(input: {
 }): Promise<Receipt> {
   const { content, target, account, taskId, onInfo } = input;
   const at = new Date().toISOString();
-  const log = (msg: string): void => {
-    onInfo?.(msg);
-  };
 
-  try {
-    const result = await withProfileCookieSession({
-      profileDir: account.profileDir,
-      cookieUrl: WEIBO_ARTICLE_EDITOR,
-      run: async ({ fetch: fetchFn, landingHtml }) => {
-        // 1. 登录态
-        log('检测微博登录态');
-        const info = await getWeiboUserConfig(fetchFn, landingHtml);
-        if (!info) {
-          throw new Error('微博未登录或 Cookie 失效，请到账号页重新登录');
-        }
-        log(`已登录：${info.nick}`);
+  const result = await publishCore({
+    profileDir: account.profileDir,
+    title: content.title,
+    markdown: content.markdown ?? '',
+    onInfo,
+  });
 
-        // 2. 建草稿
-        log('创建头条文章草稿');
-        const { draftId } = await createWeiboArticleDraft(fetchFn, info.uid);
-
-        // 3. 写正文
-        const html = markdownToSimpleHtml(content.markdown ?? '').replace(
-          />\s+</g,
-          '><',
-        );
-        log('写入草稿正文');
-        await saveWeiboArticleDraft(fetchFn, {
-          uid: info.uid,
-          draftId,
-          title: content.title,
-          contentHtml: html,
-        });
-
-        return { draftId };
-      },
-    });
-
-    return {
-      taskId,
-      target,
-      ok: true,
-      url: weiboDraftUrl(result.draftId),
-      at,
-    };
-  } catch (err) {
+  if (!result.ok) {
     return {
       taskId,
       target,
       ok: false,
       error: {
         code: SeedcastErrorCode.PLATFORM_REJECTED,
-        message: err instanceof Error ? err.message : String(err),
+        message: result.error?.message ?? '微博发布失败',
       },
       at,
     };
   }
+
+  return {
+    taskId,
+    target,
+    ok: true,
+    url: result.url,
+    at,
+  };
 }

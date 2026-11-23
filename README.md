@@ -32,7 +32,7 @@ Markdown 分栏编辑，草稿 / 已发布筛选，一键去发布。
 
 ### 账号库
 
-按插件管理平台能力与登录账号（公众号 / 知乎 / CSDN / 简书 / 百家号 / 头条 / 微博 / B站 / 抖音 / X / YouTube 等）。
+按插件管理平台能力与登录账号（公众号 / 知乎 / CSDN / 简书 / 百家号 / 头条 / 微博 / B站 / 抖音 / 小红书 / X / YouTube 等）。
 
 ![账号库](./assets/screenshots/04-accounts.jpg)
 
@@ -118,10 +118,11 @@ Seedcast 走的是 **本地桌面 + 开源插件** 路线：
 | 微博 | `weibo` | 浏览器会话 | Cookie + Web API | 文章 | 写入头条文章草稿 |
 | B站专栏 | `bilibili` | 浏览器会话 | Cookie + Web API | 文章 | 写入专栏草稿 |
 | 抖音 | `douyin` | 浏览器会话 | 创作者中心页面自动化 | 文章 / 图文 | 写入创作者中心草稿（首版不做短视频） |
+| 小红书 | `xiaohongshu` | 浏览器会话 | 创作者中心页面自动化 | 图文 / 文章 | 图文笔记（需本地图）或写长文草稿；发布设置可选形式 |
 | X | `x` | API Key / Access Token | 官方 API 发帖 | 文章 / 图文 | 立即发帖（无草稿箱；按次计费请自查） |
 | YouTube | `youtube` | OAuth Client + Refresh Token | Data API v3 上传 | 视频 | 默认上传为私密（Studio 可再公开） |
 
-更多平台可通过插件贡献扩展（掘金、小红书等欢迎 PR）。
+更多平台可通过插件贡献扩展（掘金等欢迎 PR）。
 
 ---
 

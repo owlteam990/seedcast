@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "小红书发布设置",
+  "properties": {
+    "publishType": {
+      "type": "string",
+      "title": "发布形式",
+      "description": "图文笔记（短文+配图）或写长文（千字长文）。未选时：文章默认长文，图文默认图文笔记",
+      "enum": ["imageText", "article"],
+      "enumLabels": {
+        "imageText": "上传图文（短笔记）",
+        "article": "写长文"
+      },
+      "default": "imageText"
+    },
+    "topics": {
+      "type": "string",
+      "title": "话题（逗号分隔）",
+      "description": "可选；图文笔记写入正文末尾为 #话题",
+      "x-showWhen": { "publishType": "imageText" }
+    }
+  },
+  "required": ["publishType"]
+}

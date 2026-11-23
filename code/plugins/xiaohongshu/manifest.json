@@ -1,0 +1,27 @@
+{
+  "id": "xiaohongshu",
+  "name": "小红书",
+  "version": "0.2.0",
+  "apiVersion": 1,
+  "adapter": "code",
+  "entry": "builtin",
+  "contentTypes": ["imageText", "article"],
+  "platform": {
+    "home": "https://creator.xiaohongshu.com/",
+    "loginUrl": "https://creator.xiaohongshu.com/login",
+    "sessionCheck": {
+      "url": "https://creator.xiaohongshu.com/new/home",
+      "loggedInSelector": "loggedIn",
+      "loggedInCookie": "web_session",
+      "timeoutMs": 15000
+    }
+  },
+  "capabilities": {
+    "draft": true,
+    "nativeSchedule": false,
+    "publishTypes": [
+      { "id": "imageText", "label": "上传图文草稿" },
+      { "id": "article", "label": "写长文草稿" }
+    ]
+  }
+}

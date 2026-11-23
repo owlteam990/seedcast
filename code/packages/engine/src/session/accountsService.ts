@@ -200,6 +200,12 @@ async function verifyCookieApiSession(
     );
     return checkDouyinSession(account);
   }
+  if (pluginId === 'xiaohongshu') {
+    const { checkXhsSession } = await import(
+      '../adapters/xiaohongshu/checkSession.js'
+    );
+    return checkXhsSession(account);
+  }
   return null;
 }
 

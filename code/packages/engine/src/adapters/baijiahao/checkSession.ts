@@ -1,35 +1,21 @@
 /**
- * 百家号登录态检测（Web API）
+ * 百家号登录态 — 委托 @seedcast/publish-core
  *
  * @author Seedcast
- * @date 2026-11-22
+ * @date 2026-11-23
  */
 
 import type { Account } from '@seedcast/shared';
-import { withProfileCookieSession } from '../cookieHttp.js';
-import { BAIJIAHAO_ORIGIN, getBaijiahaoAppInfo } from './client.js';
+import { checkBaijiahaoSession as checkCore } from '@seedcast/publish-core';
 
 /**
  * 检测百家号 Cookie 是否仍有效
  *
  * @param account 账号
  * @returns 是否已登录
- * @author Seedcast
- * @date 2026-11-22
  */
 export async function checkBaijiahaoSession(
   account: Account,
 ): Promise<boolean> {
-  try {
-    const info = await withProfileCookieSession({
-      profileDir: account.profileDir,
-      cookieUrl: BAIJIAHAO_ORIGIN,
-      run: async ({ fetch: fetchFn }) => {
-        return getBaijiahaoAppInfo(fetchFn);
-      },
-    });
-    return Boolean(info?.userId);
-  } catch {
-    return false;
-  }
+  return checkCore(account);
 }
